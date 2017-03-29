@@ -15,5 +15,6 @@ Link :
 
 
 Papers:
-- http://www.netlib.org/lapack/lawnspdf/lawn127.pdf
-- http://www.netlib.org/utk/people/JackDongarra/PAPERS/beautiful-code.pdf
+- http://www.netlib.org/lapack/lawnspdf/lawn127.pdf  LU su LAPACK
+- http://www.netlib.org/utk/people/JackDongarra/PAPERS/beautiful-code.pdf  LU
+- http://www.math.iit.edu/~fass/477577_Chapter_7.pdf  perchè LU è meglio di Gauss
