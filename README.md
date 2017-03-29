@@ -12,6 +12,7 @@ Link :
 - https://en.wikipedia.org/wiki/Comparison_of_linear_algebra_libraries
 - http://stackoverflow.com/questions/6977677/blas-lapack-routine-for-doing-gaussian-elimination  LU = Gauss
 - https://en.wikipedia.org/wiki/LU_decomposition
+- http://icl.cs.utk.edu/lapack-forum/viewtopic.php?f=2&t=104 Nessuna procedura per eseguire riduzione di Gauss diretta su LAPACK
 
 
 Papers:
