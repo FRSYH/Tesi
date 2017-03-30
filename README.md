@@ -5,7 +5,7 @@ Librerie per Algebra Lineare:
 - GSL
 - BLAS
 - LAPACK
-- librsb (per marici sparse, architetture parallele)
+- librsb (per matrici sparse, architetture parallele)
 - ATLAS (basto su BLAS)
 
 Link :
