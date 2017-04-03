@@ -21,3 +21,7 @@ Papers:
 - http://www.netlib.org/utk/people/JackDongarra/PAPERS/beautiful-code.pdf  LU on LAPACK
 - http://www.math.iit.edu/~fass/477577_Chapter_7.pdf  perchè LU è meglio di Gauss
 - https://www.math.ucdavis.edu/~linear/old/notes11.pdf LU su matrici non quadrate
+
+
+Problema della imprecisione delle operazioni Floating point 
+https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
