@@ -121,6 +121,46 @@ void gauss_riduzione(gsl_matrix * m, int row, int col){
 
 }
 
+void riduzione(gsl_matrix * m, int row, int col, int riga_pivot, int j){
+	
+	int r,k;
+	double s,tmp,a;
+	printf("entro riduzione\n");
+	printf("riga_pivot %d\n", riga_pivot);
+	for( r=riga_pivot+1; r<row; r++ ){
+		if( gsl_matrix_get(m,r,j) != 0.0 ){
+			s = (1/gsl_matrix_get(m,riga_pivot,j))*gsl_matrix_get(m,r,j);
+			for( k=0; k<col; k++ ){
+				tmp = s*gsl_matrix_get(m,riga_pivot,k); 
+				printf("tmp %g\n", tmp);
+				a = gsl_matrix_get(m,r,k)-tmp;
+				gsl_matrix_set(m,r,k, a);
+			}
+		}
+	}
+	
+}
+
+
+void gauss(gsl_matrix * m, int row, int col){
+	
+	int pivot_riga, pivot_colonna,righe_trovate,j;
+	
+	righe_trovate = -1;
+	printf("entro gauss\n");
+	for( j=0; j<col; j++){
+		pivot_colonna = j;
+		for( pivot_riga=(righe_trovate+1); pivot_riga<row; pivot_riga++ ){
+			if( gsl_matrix_get(m,pivot_riga,pivot_colonna) != 0.0 ){
+				riduzione(m,row,col,pivot_riga,pivot_colonna);
+				righe_trovate++;
+				swap_rows(m,row,col,righe_trovate,pivot_riga);
+				break;
+			}
+		}
+	}
+
+}
 
 int main (void)
 {
