@@ -162,6 +162,10 @@ void gauss(gsl_matrix * m, int row, int col){
 
 }
 
+
+
+
+
 int main (void)
 {
 	double a_data[] = { 1.0, 2.0, -1.0, 3.0, 7.0, 6.0, 
