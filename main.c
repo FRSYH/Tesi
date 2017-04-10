@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <gsl/gsl_linalg.h>
 
+int max_degree = 0;
+int module = 0;
+
 void swap_rows(gsl_matrix * m, int row, int col, int j, int i){
 	
 	int k;
@@ -181,7 +184,7 @@ int main (void)
 
 	gsl_matrix_view m = gsl_matrix_view_array (a_data, row, col);
 
-	gauss_riduzione(&m.matrix, row, col);
+	gauss(&m.matrix, row, col);
 	
 	print_matrix(&m.matrix, row, col);
 

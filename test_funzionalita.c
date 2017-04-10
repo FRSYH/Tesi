@@ -103,31 +103,8 @@ void moltiplica_riga(gsl_matrix * m, int * row, int col, int riga, int * degree,
 				
 				for(k=0; k<col; k++){
 					
-					value = gsl_matrix_get(m,riga,k);
-
 					if( value != 0.0 ){
-
-						//printf("entro terzo ciclo \n");
-						grado_a = grado_monomio(k,degree_position); //grado del monomio sulla riga
-				
-						grado_prodotto = grado_a + grado_b;         //grado del monomio prodotto dei due termini
-
-						offset_a = k - degree_position[grado_a];
-					
-						offset_b = (sum+j) - degree_position[grado_b];		
-
-						offset = offset_a + offset_b;
-
-						posizione_nuovo_monomio = degree_position[grado_prodotto] + offset;
-	
-						if( grado_a == grado_b && offset_a == offset_b ){
-							posizione_nuovo_monomio += 1;
-						}
-
-						gsl_matrix_set(m,*row,posizione_nuovo_monomio,value);
-
-						printf("grado_prodotto %d  offset %d grado_a %d grado_b %d offset_a %d offset_b %d posizione_nuovo_monomio %d\n",grado_prodotto,offset,grado_a,grado_b,offset_a,offset_b,posizione_nuovo_monomio);
-					
+																	
 					}
 
 					
@@ -136,7 +113,6 @@ void moltiplica_riga(gsl_matrix * m, int * row, int col, int riga, int * degree,
 				*row = *row + 1;		
 	
 			}
-			break;
 			sum = 0;
 			for(k=0; k<i; k++){
 				sum += degree[k];
