@@ -124,9 +124,49 @@ void moltiplica_riga(gsl_matrix * m, int * row, int col, int riga, int * degree,
 
 }
 
+
+void prova(int ***m, int row, int col){
+	int i,j;
+	*m = malloc(row * sizeof (int *) );            // allocazione della matrice
+	if( *m != NULL ){
+		for (i=0; i<row; i++)
+		{
+			(*m)[i] = calloc(col , sizeof (int) );
+		}
+
+	}
+
+	for(i=0; i<row;i++){
+		for(j=0; j< col; j++){
+			(*m)[i][j] = 1;
+		}
+	}
+
+	
+	*m = realloc( *m , (row+10) * sizeof (int *));
+	for (i=row; i<row+10; i++)
+	{
+		(*m)[i] = calloc(col , sizeof (int) );
+	}
+	
+
+}
+
+
+void close(int ***m, int row, int col){
+	int i;
+	for (i=0; i<row; i++)
+	{
+		free( (*m)[i] );
+	}
+	
+	free(*m);
+}
+
+
 int main(void){
 	
-	max_degree = 7;
+/*	max_degree = 7;
 	
 	int i,*row_p,col,row,num_var,row_max;
 
@@ -166,7 +206,22 @@ int main(void){
 	
 	
 
-	print_matrix(m,*row_p,col);	
+	print_matrix(m,*row_p,col);	*/
+
+	int **m;
+	int i,row,col,j;
+	row = 10;
+	col = 10;
+	prova(&m,row,col);
+	row = 20;
+	for(i=0; i<row;i++){
+		for(j=0; j< col; j++){
+			printf("%d ",m[i][j]);
+		}
+		printf("\n");
+	}
+
+	close(&m,row,col);
 
 	return 0;
 }

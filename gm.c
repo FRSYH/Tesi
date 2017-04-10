@@ -64,6 +64,8 @@ void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
                  void *arg);
 
 
+void prova(int ***m,int row,int col);
+
 int main (void){
 
 	max_degree = 7;
@@ -122,6 +124,8 @@ int main (void){
 		}
 
 	}
+
+	//prova(&m,row_max,col);
 //##########################################################################
 	
 	init_matrix(m,row,col); 
@@ -318,7 +322,7 @@ void moltiplica_riga(int **m, int * row, int col, int riga, int **map,int * degr
 //moltiplica la riga indicata per ogni monomio in modo tale che il prodotto abbia grado <= del grado massimo
 
 	int grado_massimo_riga, grado_massimo_monomio, grado_a, grado_b, grado_prodotto;
-	int i,j,k,last,sum, posizione_nuovo_monomio, offset, offset_a, offset_b,v,value;
+	int i,j,k,last, posizione_nuovo_monomio, offset, offset_a, offset_b,v,value;
 
 	
     v = 0;
@@ -343,8 +347,10 @@ void moltiplica_riga(int **m, int * row, int col, int riga, int **map,int * degr
 		
 		printf("grado massimo riga %d grado massimo monomio %d\n", grado_massimo_riga,grado_massimo_monomio);
 		//moltiplico la riga per ogni monomio possibile
-		sum = 1;
+
 		printf("numero monomi %d \n",degree_position[grado_massimo_monomio+1]);
+	
+	
 		for(i=1; i<degree_position[grado_massimo_monomio+1]; i++){     //scorre tutti i gradi per i quali posso moltiplicare
 			
 			for(j=0; j<(last+1); j++){     //scorre fino all'ultimo elemento della riga
@@ -559,6 +565,21 @@ void vctcpy(int *vet1, const int *vet2, int len) {
 	for (int i = 0; i < len; i++)
 		vet1[i] = vet2[i];
 	return;
+}
+
+
+void prova(int ***m,int row,int col){
+	int i;
+	*m = malloc(row * sizeof (int *) );            // allocazione della matrice
+	if( *m != NULL ){
+		for (i=0; i<row; i++)
+		{
+			(*m)[i] = calloc(col , sizeof (int) );
+		}
+
+	}
+
+
 }
 
 
