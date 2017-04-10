@@ -31,9 +31,6 @@ void init_matrix(int **m, int row, int col); //inizializza la matrice dei coeffi
 //moltiplica la riga indicata per tutti i possibili monomi
 void moltiplica_riga(int **m, int *row, int col, int riga, int **map,int * degree, int * degree_position); 
 
-//returns the number of all possible monomial with n variables and degree <= m
-int monomial_combinations(int n, int m); 
-
 //initialize the vector that keeps the number of monomial with the same grade and their position
 void init_degree_vector(int * degree, int * degree_position, int num_var);
 
@@ -42,8 +39,34 @@ int grado_monomio(int posizione, int *degree_position);
 
 int combination(int n, int k);
 
+//returns the number of all possible monomial with n variables and degree <= m
+int monomial_combinations(int n, int m); 
+
+//computes all possible monomials with n variables and degree <= m
+//saves them into array vet, see the definition for more informations
+void monomial_computation(int n, int m,  int **vet, int turn, int *monomial);
+
+//copies vector vet2 into vet1 of length len
+void vctcpy(int *vet1, int const *vet2, int len);
+
+//compares two monomials of *(arg) variables following the grevlex order
+//returns a positive number if mon1 > mon2, 0 if they are equal, negative otherwise
+int grevlex_comparison(const void *mon1, const void *mon2, void *arg);
+
+//maps all the possible multiplications of the monomials of n variables in the array
+//vet of length len into the matrix map[len][len]
+void setup_map(int **map, int **vet, int len, int n, int m);
+
+
+//missing in stdlib, counterpart of qsort_r
+void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
+                 int (*compar) (const void *, const void *, void *),
+                 void *arg);
+
+
 int main (void){
 
+	max_degree = 7;
 
 	int row, col, i, num_var, degree[max_degree+1], degree_position[max_degree+1];
 	int **m, *d_row, row_max;
@@ -52,15 +75,48 @@ int main (void){
 	row_max = 100;
 	col = 120;
 	module = 773;	
-	max_degree = 7;
 	num_var = 3;
 	d_row = &row;
 
 
+	//map allocation
+
+	int **vet, len, **map;
+
+	len = 1+monomial_combinations(num_var, max_degree);
+
+	vet = malloc(sizeof(int*) * len);
+
+	for (int i = 0; i < len; i++)
+		vet[i] = malloc(num_var * sizeof(int));
+	
+	int *mon = malloc(num_var*sizeof(int));
+
+	monomial_computation(num_var, max_degree, vet, 0, mon);
+
+	free(mon);
+
+	qsort_r(vet, len, sizeof(int*), grevlex_comparison, &num_var);
+
+	map = malloc(len * sizeof(int *));
+	for (int i = 0; i < len; i++)
+		map[i] = malloc(len * sizeof(int));
+
+	setup_map(map, vet, len, num_var, max_degree);           // a questo punto posso utilizzare la mappa
+/*	
+	for (int row = 0; row < len; row++){
+		for (int col = 0; col < len; col++)
+			printf("%d ", map[row][col]);
+		printf("\n");
+	}
+
+*/
+
+
 //###########################################################################
-	m = malloc(row * sizeof (int *) );            // allocazione della matrice
+	m = malloc(row_max * sizeof (int *) );            // allocazione della matrice
 	if( m != NULL ){
-		for (i=0; i<row; i++)
+		for (i=0; i<row_max; i++)
 		{
 			m[i] = calloc(col , sizeof (int) );
 		}
@@ -70,21 +126,37 @@ int main (void){
 	
 	init_matrix(m,row,col); 
 
+	init_degree_vector(degree,degree_position,num_var);
+
 	//gauss(m, row, col);
 
 	moltiplica_riga(m,d_row,col,0,map,degree,degree_position);
-
-	print_matrix(m, *d_row, col);	
 	
-	init_degree_vector(degree,degree_position,num_var);
+	printf("numero righe %d\n", *d_row);
+
+	//print_matrix(m, row, col);	
+	
+
 
 
 //##################################################################  	
-	for (i=0; i<row; i++)      // deallocazione della matrice
+
+	for (i=0; i<row_max; i++)      // deallocazione matrice
 	{
 		free(m[i]);
 	}
 	free(m);	
+
+	for (int i = 0; i < len; i++) {
+		free(vet[i]);
+	}
+	free(vet);	
+
+	for (int i = 0; i < len; i++) {
+		free(map[i]);
+	}
+	free(map);	
+
 //#################################################################
 
 	return 0;
@@ -208,17 +280,18 @@ void print_matrix (int **m, int row, int col){
 void init_matrix(int **m, int row, int col){
 
 	m[0][0] = 640;
-	m[0][2] = 640;
-	m[0][3] = 640;
-	m[0][5] = 640;
-	m[0][6] = 640;
-	m[0][8] = 640;
-	m[0][23] = 640;
-	m[0][24] = 640;
-	m[0][25] = 640;
-	m[0][27] = 640;
-	m[0][28] = 640;
-	m[0][32] = 640;
+	m[0][1] = 328;
+	m[0][2] = 328;
+	m[0][3] = 328;
+	m[0][5] = 431;
+	m[0][6] = 431;
+	m[0][8] = 431;
+	m[0][23] = 1;
+	m[0][24] = 771;
+	m[0][25] = 1;
+	m[0][27] = 771;
+	m[0][28] = 771;
+	m[0][32] = 1;
 }
 
 //returns the number of all possible monomial with n variables and degree <= m
@@ -271,11 +344,13 @@ void moltiplica_riga(int **m, int * row, int col, int riga, int **map,int * degr
 		printf("grado massimo riga %d grado massimo monomio %d\n", grado_massimo_riga,grado_massimo_monomio);
 		//moltiplico la riga per ogni monomio possibile
 		sum = 1;
+		printf("numero monomi %d \n",degree_position[grado_massimo_monomio+1]);
 		for(i=1; i<degree_position[grado_massimo_monomio+1]; i++){     //scorre tutti i gradi per i quali posso moltiplicare
 			
-			for(j=0; j<last; j++){     //scorre fino all'ultimo elemento della riga
-				m[riga][ map[j][i] ] = m[riga][j];
-			}			
+			for(j=0; j<(last+1); j++){     //scorre fino all'ultimo elemento della riga
+				m[*row][ map[i][j] ] = m[riga][j];
+			}
+			*row = *row + 1;			
 				
 		}
 		printf("moltiplicazione eseguita con successo !!\n");
@@ -325,6 +400,165 @@ int combination(int n, int k){
 	b = gsl_sf_fact(k);
 	c = gsl_sf_fact((n+k-1)-k);
 	return  a/(c*b);
+}
+
+
+
+//maps all the possible multiplications of the monomials of n variables and
+//degree <= m in the array vet of length len into the matrix map[len][len]
+//sets the value to -1 if the multiplication exceeds vet
+void setup_map(int **map, int **vet, int len, int n, int m) {
+
+	int sum, *temp = malloc(n * sizeof(int));
+
+	for (int row = 0; row < len; row++)
+		for (int col = 0; col < len; col++) {
+			sum = 0;
+			for (int v = 0; v < n; v++) {
+				temp[v] = vet[row][v] + vet[col][v];
+				sum += temp[v];
+			}
+			if (sum > m) {
+				for (int i = col; i < len; i++)
+					map[row][i] = -1;
+				break;	
+			}
+			else
+				map[row][col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), grevlex_comparison, &n)) - vet;
+		}
+		
+	free(temp);
+}
+
+
+//https://git.devuan.org/jaretcantu/eudev/commit/a9e12476ed32256690eb801099c41526834b6390
+//missing in stdlib, counterpart of qsort_r
+void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
+                 int (*compar) (const void *, const void *, void *),
+                 void *arg) {
+	size_t l, u, idx;
+	const void *p;
+	int comparison;
+
+	l = 0;
+	u = nmemb;
+	while (l < u) {
+		idx = (l + u) / 2;
+		p = (void *)(((const char *) base) + (idx * size));
+		comparison = compar(key, p, arg);
+		if (comparison < 0)
+			u = idx;
+		else if (comparison > 0)
+			l = idx + 1;
+		else
+			return (void *)p;
+	}
+	return NULL;
+}
+
+//compares two monomials of n variables following the grevlex order
+//returns a positive number if mon1 > mon2, 0 if they are equal, negative otherwise
+//various casts are made to achive compatibility with qsort_r
+int grevlex_comparison(const void *monom1, const void *monom2, void *arg) {
+
+	int degree1 = 0, degree2 = 0, n, *mon1, *mon2;
+	n = *((int *) arg);
+	mon1 = *((int **) monom1);
+	mon2 = *((int **) monom2);
+	
+	for (int v = 0; v < n; v++) {
+		degree1 += mon1[v];
+		degree2 += mon2[v];
+	}
+	
+	if (degree1 > degree2)
+		return 1;
+	else if (degree1 < degree2)
+		return -1;
+	else {
+		int *temp = malloc(n * sizeof(int));
+		for (int v = 0; v < n; v++)
+			temp[v] = mon1[v] - mon2[v];
+		for (int v = (n-1); v >= 0; v--) {
+			if (temp[v] != 0) {
+				return -temp[v];
+				free(temp);
+				//to avoid freeing the same pointer twice
+				temp = NULL;
+			}
+		}
+				free(temp);
+	}
+	
+	return 0;
+	
+}
+
+
+/*recursive function that computes all possible monomials with n variables
+and degree <= m, saves them into array vet. A monomial is represented as an
+array of int, where each positions describes the degree of the variable.
+The array has to be initialized with the correct length.
+Other parameters are need for recursive structure and should always be
+turn = 0 represents the position of the variable in the monomial
+monomial = array of int of length n used to compute the various permutations
+*/
+void monomial_computation(int n, int m, int **vet, int turn, int *monomial) {
+
+	//s keeps track of the monomial already saved in the array vet
+	//static becasue it must keep values through the recursive calls
+	//no thread safe
+	static int s = 0;
+
+	//for every variable try all degrees from 0 to m
+	for (int degree = 0; degree <= m; degree++) {
+		//if this is the first variable all other variables have looped
+		if (turn == 0) {
+			//reset the monomial with only your degree
+			monomial[0] = degree;
+			for (int v = 1; v < n; v++)
+				monomial[v] = 0;		
+		}
+		//other variables add their values to the monomial
+		else
+			monomial[turn] = degree;
+		
+		
+		//get total degree of monomial by adding the variables degrees together
+		int sum = 0;
+		for (int v = 0; v <= turn; v++)
+			sum += monomial[v];
+		//if the degree of the monomial exceeds the maximum it's pointless to continue
+		//looping searching for other monomials since they all have degree >=
+		if (sum > m)
+			break;
+
+
+		//if this is the last variable and we haven't broke out with the previous condition
+		//copy this monomial to the vecor vet and increase the index to the vector
+		if (turn == (n-1)) {
+			vctcpy(vet[s], monomial, n);
+			s+=1;
+		}
+		//otherwise recursively call itself changing the variable (turn)
+		else
+			monomial_computation(n, m, vet, turn+1, monomial);
+	}
+	
+	//before finishing the function (the first variable has finished looping)
+	//set the array index to zero so that the function can be called again
+	//because it wouldn't reset if called again since it declared static 
+	if (turn == 0)
+		s = 0;
+	return;
+}
+
+
+//copies vector vet2 into vet1 of length len
+void vctcpy(int *vet1, const int *vet2, int len) {
+	for (int i = 0; i < len; i++)
+		vet1[i] = vet2[i];
+	return;
 }
 
 
