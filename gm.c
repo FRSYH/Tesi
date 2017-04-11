@@ -29,7 +29,7 @@ void print_matrix (int **m, int row, int col); // stampa la matrice
 void init_matrix(int **m, int row, int col); //inizializza la matrice dei coefficienti
 
 //moltiplica la riga indicata per tutti i possibili monomi
-void moltiplica_riga(int **m, int *row, int col, int riga, int **map,int * degree, int * degree_position); 
+void moltiplica_riga(int ***m, int *row, int col, int riga, int **map,int * degree, int * degree_position); 
 
 //initialize the vector that keeps the number of monomial with the same grade and their position
 void init_degree_vector(int * degree, int * degree_position, int num_var);
@@ -64,24 +64,35 @@ void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
                  void *arg);
 
 
-void prova(int ***m,int row,int col);
+//multiply the entire matrix for all possible correct monomial
+void moltiplica_matrice(int ***m, int *row, int col, int **map, int *degree, int *degree_position);
+
+//compute the different degree of the matrix rows
+void matrix_degree(int **m, int row, int col, int *m_deg, int *degree_position);
+
+//formatted print of matrix degree
+void print_matrix_degree(int *m_deg);
+
+//compute the number of null rows (rows of full 0)
+int null_rows(int **m, int row, int col);
 
 int main (void){
 
 	max_degree = 7;
 
 	int row, col, i, num_var, degree[max_degree+1], degree_position[max_degree+1];
-	int **m, *d_row, row_max;
+	int **m, *d_row, *m_deg;
 	
-	row = 1;
-	row_max = 100;
+	row = 4;
 	col = 120;
 	module = 773;	
 	num_var = 3;
 	d_row = &row;
 
 
-	//map allocation
+
+//########################################################################
+	//map allocation and creation
 
 	int **vet, len, **map;
 
@@ -105,47 +116,45 @@ int main (void){
 		map[i] = malloc(len * sizeof(int));
 
 	setup_map(map, vet, len, num_var, max_degree);           // a questo punto posso utilizzare la mappa
-/*	
-	for (int row = 0; row < len; row++){
-		for (int col = 0; col < len; col++)
-			printf("%d ", map[row][col]);
-		printf("\n");
-	}
-
-*/
 
 
 //###########################################################################
-	m = malloc(row_max * sizeof (int *) );            // allocazione della matrice
+	m = malloc(row * sizeof (int *) );            // allocazione della matrice
 	if( m != NULL ){
-		for (i=0; i<row_max; i++)
+		for (i=0; i<row; i++)
 		{
 			m[i] = calloc(col , sizeof (int) );
 		}
 
 	}
 
-	//prova(&m,row_max,col);
+	m_deg = calloc(max_degree+1, sizeof(int));
+
 //##########################################################################
 	
 	init_matrix(m,row,col); 
 
 	init_degree_vector(degree,degree_position,num_var);
 
-	//gauss(m, row, col);
+	moltiplica_matrice(&m,d_row,col,map,degree,degree_position);
 
-	moltiplica_riga(m,d_row,col,0,map,degree,degree_position);
+	matrix_degree(m,row,col,m_deg,degree_position);
+
+	print_matrix_degree(m_deg);
+
+	printf("righe nulle %d \n",null_rows(m,row,col));
+
+	gauss(m, row, col);
+
+	printf("righe nulle %d \n",null_rows(m,row,col));
+
+	print_matrix(m, row, col);	
 	
-	printf("numero righe %d\n", *d_row);
-
-	//print_matrix(m, row, col);	
 	
-
-
 
 //##################################################################  	
 
-	for (i=0; i<row_max; i++)      // deallocazione matrice
+	for (i=0; i<row; i++)      // deallocazione matrice
 	{
 		free(m[i]);
 	}
@@ -160,6 +169,8 @@ int main (void){
 		free(map[i]);
 	}
 	free(map);	
+
+	free(m_deg);
 
 //#################################################################
 
@@ -215,14 +226,14 @@ int mul_mod(int a, int b, int p){
 
 void gauss(int **m, int row, int col){
 	
-	int pivot_riga, pivot_colonna,righe_trovate,j;
+	int pivot_riga, pivot_colonna,righe_trovate,j,n_col;
 	
 	righe_trovate = -1;
-	printf("entro gauss\n");
+	printf("Entro gauss\n");
 	for( j=0; j<col; j++){
-		pivot_colonna = j;
+		pivot_colonna = col-(j+1);
 		for( pivot_riga=(righe_trovate+1); pivot_riga<row; pivot_riga++ ){
-			if( m[pivot_riga][pivot_colonna] != 0.0 ){
+			if( m[pivot_riga][pivot_colonna] != 0 ){
 				riduzione(m,row,col,pivot_riga,pivot_colonna);
 				righe_trovate++;
 				swap_rows(m,row,col,righe_trovate,pivot_riga);
@@ -230,7 +241,7 @@ void gauss(int **m, int row, int col){
 			}
 		}
 	}
-
+	printf("\nGauss completato\n");
 }
 
 
@@ -238,15 +249,14 @@ void riduzione(int **m, int row, int col, int riga_pivot, int j){
 	
 	int r,k,s,inv,a;
 
-	printf("entro riduzione\n");
-	printf("riga_pivot %d\n", riga_pivot);
 	for( r=riga_pivot+1; r<row; r++ ){
-		if( m[r][j] != 0.0 ){
+		if( m[r][j] != 0 ){
 			inv = invers(m[riga_pivot][j],module);			//calcola l'inverso moltiplicativo di m[riga_pivot][j] nel campo indicato
 			s = mul_mod(inv,m[r][j],module);
 			for( k=0; k<col; k++ ){
 				a = mul_mod(s,m[riga_pivot][k],module);
 				m[r][k] = sub_mod(m[r][k],a,module);
+				printf("%d \n",m[r][k]);
 			}
 		}
 	}
@@ -283,6 +293,7 @@ void print_matrix (int **m, int row, int col){
 
 void init_matrix(int **m, int row, int col){
 
+	//prima riga
 	m[0][0] = 640;
 	m[0][1] = 328;
 	m[0][2] = 328;
@@ -296,6 +307,23 @@ void init_matrix(int **m, int row, int col){
 	m[0][27] = 771;
 	m[0][28] = 771;
 	m[0][32] = 1;
+	//seconda riga
+	m[1][0] = 131;
+	m[1][3] = 104;
+	m[1][9] = 64;
+	m[1][19] = 413;
+	m[1][34] = 1;
+	//terza riga
+	m[2][0] = 356;
+	m[2][2] = 486;
+	m[2][7] = 294;
+	m[2][16] = 657;
+	m[2][30] = 1;
+	//quarta riga
+	m[3][0] = 691;
+	m[3][1] = 52;
+	m[3][4] = 393;
+	m[3][10] = 1;
 }
 
 //returns the number of all possible monomial with n variables and degree <= m
@@ -318,24 +346,24 @@ int monomial_combinations(int n, int m) {
 }
 
 
-void moltiplica_riga(int **m, int * row, int col, int riga, int **map,int * degree, int * degree_position){
+void moltiplica_riga(int ***m, int * row, int col, int riga, int **map,int * degree, int * degree_position){
 //moltiplica la riga indicata per ogni monomio in modo tale che il prodotto abbia grado <= del grado massimo
 
 	int grado_massimo_riga, grado_massimo_monomio, grado_a, grado_b, grado_prodotto;
 	int i,j,k,last, posizione_nuovo_monomio, offset, offset_a, offset_b,v,value;
-
+	int new_row;
 	
     v = 0;
 	last = -1;
 	//cerco la posizione dell'ultimo coefficiente non nullo del polinomio rappresentato nella riga, grado più alto
 	for(i=col-1; i>0; i--){
-		v = m[riga][i];		
-		if( v != 0.0 ){
+		v = (*m)[riga][i];		
+		if( v != 0 ){
 			last = i;
 			break;
 		}
 	}
-	printf("last %d\n",last);
+
 	//risalgo al grado del monomio appena trovato
 	//scorro la lista delle posizioni di inizio dei monomi con lo stesso grado
 	if( last != -1 ){
@@ -344,22 +372,26 @@ void moltiplica_riga(int **m, int * row, int col, int riga, int **map,int * degr
 		
 		//calcolo il grado massimo che deve avere il monomio per cui moltiplicare		
 		grado_massimo_monomio = max_degree - grado_massimo_riga;		
-		
-		printf("grado massimo riga %d grado massimo monomio %d\n", grado_massimo_riga,grado_massimo_monomio);
-		//moltiplico la riga per ogni monomio possibile
-
-		printf("numero monomi %d \n",degree_position[grado_massimo_monomio+1]);
 	
+		// a questo punto conosco per quanti monomi devo moltiplicare e quindi 
+		// conosco il numero di righe che devo aggiungere alla matrice
+
+		new_row = degree_position[grado_massimo_monomio+1]-1; //righe da aggiungere 
+
+		*m = realloc( *m , (*row + new_row ) * sizeof (int *));
+		for (i=(*row); i< (*row + new_row ); i++)
+		{
+			(*m)[i] = calloc(col , sizeof (int) );
+		}
 	
 		for(i=1; i<degree_position[grado_massimo_monomio+1]; i++){     //scorre tutti i gradi per i quali posso moltiplicare
 			
 			for(j=0; j<(last+1); j++){     //scorre fino all'ultimo elemento della riga
-				m[*row][ map[i][j] ] = m[riga][j];
+				(*m)[*row][ map[i][j] ] = (*m)[riga][j];  //shift nella posizione corretta indicata dalla mappa
 			}
-			*row = *row + 1;			
+			*row = *row + 1;			//aumento del conteggio delle righe
 				
 		}
-		printf("moltiplicazione eseguita con successo !!\n");
 
 	}
 
@@ -369,12 +401,13 @@ void moltiplica_riga(int **m, int * row, int col, int riga, int **map,int * degr
 int grado_monomio(int posizione, int *degree_position){
 	
 	int i,grado;
+	grado = 7;
 	for(i=0; i<max_degree+1; i++){
 		if( degree_position[i] > posizione ){
 			grado = i-1;
 			break;	
 		}			
-	}	
+	}
 	return grado;
 }
 
@@ -568,18 +601,70 @@ void vctcpy(int *vet1, const int *vet2, int len) {
 }
 
 
-void prova(int ***m,int row,int col){
-	int i;
-	*m = malloc(row * sizeof (int *) );            // allocazione della matrice
-	if( *m != NULL ){
-		for (i=0; i<row; i++)
-		{
-			(*m)[i] = calloc(col , sizeof (int) );
-		}
-
+void moltiplica_matrice(int ***m, int *row, int col, int **map, int *degree, int *degree_position){
+	
+	int n,i;
+	n = *row;    //n conta il numero di righe della matrice di partenza che devo moltiplicare
+	for(i=0; i<n; i++){
+		moltiplica_riga(m,row,col,i,map,degree,degree_position);
 	}
 
-
 }
+
+void matrix_degree(int **m, int row, int col, int *m_deg, int *degree_position){
+	
+	int i,j,last,grado;
+	for(i=0; i<row; i++){
+		for(j=col-1; j>0; j--){
+			if( m[i][j] != 0 ){
+				last = j;           //posizione dell'ultimo coefficiente della riga
+				break;
+			}
+		}
+
+		grado = grado_monomio(last,degree_position);	
+		m_deg[grado] = 1;		
+	}
+}
+
+
+
+void print_matrix_degree(int *m_deg){
+	int i;	
+	printf("Gradi della matrice = {");
+	for(i=0; i<max_degree+1; i++){
+		if( m_deg[i] != 0 ){
+			printf(" %d ",i);
+		
+		}
+	}
+	printf("}\n");
+}
+
+
+
+int null_rows(int **m, int row, int col){
+	int i,j,last,null_rows;
+	null_rows = 0;
+	for(i=0; i<row; i++){
+		last = -1;
+		for(j=col-1; j>-1; j--){
+			if(m[i][j] != 0 ){
+				last = j;
+				break;
+			}
+		}
+		if( last == -1 ){
+			null_rows++;
+		}
+	}
+	return null_rows;
+}
+
+
+
+
+
+
 
 
