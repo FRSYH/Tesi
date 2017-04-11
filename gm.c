@@ -147,7 +147,7 @@ int main (void){
 
 	execute(&m,d_row,col,map,degree,degree_position);
 
-	//print_matrix(m, row, col);	
+	print_matrix(m, row, col);	
 
 	
 	
