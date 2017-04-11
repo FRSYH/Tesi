@@ -79,12 +79,18 @@ int null_rows(int **m, int row, int col);
 //eliminate the null rows of the matrix (reallocation)
 void eliminate_null_rows(int ***m, int *row, int col);
 
+//execute the multiplication, gauss reduction, elimination null_rows and compare the result to target
+void execute(int ***m, int *d_row, int col, int **map, int *degree, int *degree_position);
+
+//compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
+int target_degree(int *v);
+
 int main (void){
 
 	max_degree = 7;
 
 	int row, col, i, num_var, degree[max_degree+1], degree_position[max_degree+1];
-	int **m, *d_row, *m_deg;
+	int **m, *d_row;
 	
 	row = 4;
 	col = 120;
@@ -131,25 +137,18 @@ int main (void){
 
 	}
 
-	m_deg = calloc(max_degree+1, sizeof(int));
-
 //##########################################################################
 	
+	//RISOLUZIONE PROBLEMA
+
 	init_matrix(m,row,col); 
 
 	init_degree_vector(degree,degree_position,num_var);
 
-	moltiplica_matrice(&m,d_row,col,map,degree,degree_position);
+	execute(&m,d_row,col,map,degree,degree_position);
 
-	matrix_degree(m,row,col,m_deg,degree_position);
+	//print_matrix(m, row, col);	
 
-	print_matrix_degree(m_deg);
-
-	gauss(m, row, col);
-
-	eliminate_null_rows(&m,d_row,col);
-
-	print_matrix(m, row, col);	
 	
 	
 
@@ -170,8 +169,6 @@ int main (void){
 		free(map[i]);
 	}
 	free(map);	
-
-	free(m_deg);
 
 //#################################################################
 
@@ -669,6 +666,56 @@ void eliminate_null_rows(int ***m, int *row, int col){
 	*row = *row - null_row;
 
 }
+
+
+void execute(int ***m, int *d_row, int col, int **map, int *degree, int *degree_position){
+
+	int *m_deg;
+
+	m_deg = calloc(max_degree+1, sizeof(int));
+
+	matrix_degree(*m,*d_row,col,m_deg,degree_position);
+
+	while( target_degree(m_deg) != 0 ){
+		
+		moltiplica_matrice(m,d_row,col,map,degree,degree_position);
+	
+		gauss(*m, *d_row, col);
+
+		eliminate_null_rows(m,d_row,col);
+
+  		matrix_degree(*m,*d_row,col,m_deg,degree_position);
+
+		printf("Numero righe: %d\n", *d_row);
+
+		print_matrix_degree(m_deg);
+		
+	}
+
+//	printf("numero righe %d righe nulle %d\n",*d_row,null_rows(*m,*d_row,col));
+
+	free(m_deg);
+}
+
+
+int target_degree(int *v){
+	
+	int i,flag;
+	flag = 0;
+	for(i=1; i<max_degree+1; i++){
+		if( v[i] != 1 ){
+			flag = -1;
+			break;
+		}
+	}
+	return flag;	
+}
+
+
+
+
+
+
 
 
 
