@@ -76,6 +76,9 @@ void print_matrix_degree(int *m_deg);
 //compute the number of null rows (rows of full 0)
 int null_rows(int **m, int row, int col);
 
+//eliminate the null rows of the matrix (reallocation)
+void eliminate_null_rows(int ***m, int *row, int col);
+
 int main (void){
 
 	max_degree = 7;
@@ -142,11 +145,9 @@ int main (void){
 
 	print_matrix_degree(m_deg);
 
-	printf("righe nulle %d \n",null_rows(m,row,col));
-
 	gauss(m, row, col);
 
-	printf("righe nulle %d \n",null_rows(m,row,col));
+	eliminate_null_rows(&m,d_row,col);
 
 	print_matrix(m, row, col);	
 	
@@ -229,7 +230,6 @@ void gauss(int **m, int row, int col){
 	int pivot_riga, pivot_colonna,righe_trovate,j,n_col;
 	
 	righe_trovate = -1;
-	printf("Entro gauss\n");
 	for( j=0; j<col; j++){
 		pivot_colonna = col-(j+1);
 		for( pivot_riga=(righe_trovate+1); pivot_riga<row; pivot_riga++ ){
@@ -241,13 +241,12 @@ void gauss(int **m, int row, int col){
 			}
 		}
 	}
-	printf("\nGauss completato\n");
 }
 
 
 void riduzione(int **m, int row, int col, int riga_pivot, int j){
 	
-	int r,k,s,inv,a;
+	int r,k,s,inv,a,b;
 
 	for( r=riga_pivot+1; r<row; r++ ){
 		if( m[r][j] != 0 ){
@@ -255,8 +254,8 @@ void riduzione(int **m, int row, int col, int riga_pivot, int j){
 			s = mul_mod(inv,m[r][j],module);
 			for( k=0; k<col; k++ ){
 				a = mul_mod(s,m[riga_pivot][k],module);
+				b = m[r][k];
 				m[r][k] = sub_mod(m[r][k],a,module);
-				printf("%d \n",m[r][k]);
 			}
 		}
 	}
@@ -267,7 +266,7 @@ void riduzione(int **m, int row, int col, int riga_pivot, int j){
 void swap_rows(int **m, int row, int col, int j, int i){
 	
 	int k,tmp;
-	for(k=0;k<row;k++){
+	for(k=0;k<col;k++){
 		tmp = m[i][k];
 		m[i][k] = m[j][k];
 		m[j][k] = tmp;
@@ -662,7 +661,14 @@ int null_rows(int **m, int row, int col){
 }
 
 
+void eliminate_null_rows(int ***m, int *row, int col){
+	
+	int i,null_row;
+	null_row = null_rows(*m,*row,col);
+	*m = realloc( *m , (*row - null_row ) * sizeof (int *));
+	*row = *row - null_row;
 
+}
 
 
 
