@@ -26,3 +26,10 @@ Papers:
 Problema della imprecisione delle operazioni Floating point 
 - https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
 - http://www2.lawrence.edu/fast/GREGGJ/Math420/Section_6_2.pdf --> Bisogna usare partial pivoting.
+
+
+GSL,LAPACK e BLAS non implementano aritmetica modulare
+
+Librerie per aritmetica modulare:
+- FLINT                                -> http://www.flintlib.org/
+- Fast Galois Field Arithmetic Library -> http://web.eecs.utk.edu/~plank/plank/papers/CS-07-593/
