@@ -16,13 +16,13 @@ int sub_mod(int a, int b, int p); // a - b mod p
 
 int mul_mod(int a, int b, int p); // a * b mod p
 
-int invers(int n, int p);  // n^-1 mod p
+int invers(int n, int p);  // inverso moltiplicativo in mod p
 
 void gauss(int **m, int row, int col); // riduzione di gauss della matrice m
 
 void riduzione(int **m, int row, int col, int riga_pivot, int j);
 
-void swap_rows(int **m, int row, int col, int j, int i);  // scambia le due righe indicate della matrice
+void swap_rows(int **m, int row, int col, int j, int i);  // scambia tra di loro due righe della matrice
 
 void print_matrix (int **m, int row, int col); // stampa la matrice
 
@@ -73,10 +73,10 @@ void matrix_degree(int **m, int row, int col, int *m_deg, int *degree_position);
 //formatted print of matrix degree
 void print_matrix_degree(int *m_deg);
 
-//compute the number of null rows (rows of full 0)
+//compute the number of null rows (rows full of 0)
 int null_rows(int **m, int row, int col);
 
-//eliminate the null rows of the matrix (reallocation)
+//eliminate the matrix null rows (reallocation - resize)
 void eliminate_null_rows(int ***m, int *row, int col);
 
 //execute the multiplication, gauss reduction, elimination null_rows and compare the result to target
@@ -87,7 +87,12 @@ int target_degree(int *v);
 
 int main (void){
 
+
 	max_degree = 7;
+
+//###################################################################
+	
+	//Dichiarazioni
 
 	int row, col, i, num_var, degree[max_degree+1], degree_position[max_degree+1];
 	int **m, *d_row;
@@ -124,11 +129,11 @@ int main (void){
 	for (int i = 0; i < len; i++)
 		map[i] = malloc(len * sizeof(int));
 
-	setup_map(map, vet, len, num_var, max_degree);           // a questo punto posso utilizzare la mappa
+	setup_map(map, vet, len, num_var, max_degree);     // a questo punto posso utilizzare la mappa
 
 
 //###########################################################################
-	m = malloc(row * sizeof (int *) );            // allocazione della matrice
+	m = malloc(row * sizeof (int *) );            // allocazione della matrice dei coefficienti
 	if( m != NULL ){
 		for (i=0; i<row; i++)
 		{
@@ -141,20 +146,22 @@ int main (void){
 	
 	//RISOLUZIONE PROBLEMA
 
-	init_matrix(m,row,col); 
+	init_matrix(m,row,col); //inizializzazione matrice
 
-	init_degree_vector(degree,degree_position,num_var);
+	init_degree_vector(degree,degree_position,num_var); 
 
-	execute(&m,d_row,col,map,degree,degree_position);
+	execute(&m,d_row,col,map,degree,degree_position);  //soluzione trovata
 
-	print_matrix(m, row, col);	
+	print_matrix(m, row, col);	 //stampa la matrice soluzione
 
 	
 	
 
 //##################################################################  	
 
-	for (i=0; i<row; i++)      // deallocazione matrice
+	//Deallocazione di tutti i puntatori utilizzati
+
+	for (i=0; i<row; i++)      
 	{
 		free(m[i]);
 	}
@@ -171,6 +178,8 @@ int main (void){
 	free(map);	
 
 //#################################################################
+
+	//FINE
 
 	return 0;
 }
@@ -221,7 +230,7 @@ int mul_mod(int a, int b, int p){
 	return mod((a*b),p);
 }
 
-
+//compute the Gauss reduction over the matrix m with specified row and column size.
 void gauss(int **m, int row, int col){
 	
 	int pivot_riga, pivot_colonna,righe_trovate,j,n_col;
@@ -240,7 +249,7 @@ void gauss(int **m, int row, int col){
 	}
 }
 
-
+//compute the reduction of a single row of the matrix int the gaussian reduction
 void riduzione(int **m, int row, int col, int riga_pivot, int j){
 	
 	int r,k,s,inv,a,b;
@@ -674,25 +683,30 @@ void execute(int ***m, int *d_row, int col, int **map, int *degree, int *degree_
 
 	m_deg = calloc(max_degree+1, sizeof(int));
 
+	printf("Inizio procedura\n");
+
 	matrix_degree(*m,*d_row,col,m_deg,degree_position);
 
 	while( target_degree(m_deg) != 0 ){
-		
+
+		printf("\n -Eseguo moltiplicazione, ");
 		moltiplica_matrice(m,d_row,col,map,degree,degree_position);
-	
+		printf("numero righe: %d\n", *d_row);
+
+		printf(" -Eseguo Gauss, ");	
 		gauss(*m, *d_row, col);
 
 		eliminate_null_rows(m,d_row,col);
 
   		matrix_degree(*m,*d_row,col,m_deg,degree_position);
 
-		printf("Numero righe: %d\n", *d_row);
+		printf("numero righe: %d\n", *d_row);
 
 		print_matrix_degree(m_deg);
 		
 	}
 
-//	printf("numero righe %d righe nulle %d\n",*d_row,null_rows(*m,*d_row,col));
+	printf("\nFine procedura, target raggiunto\n\n");
 
 	free(m_deg);
 }
