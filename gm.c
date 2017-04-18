@@ -8,28 +8,28 @@
 int max_degree = 0;
 int module = 0;
 
-int mod(int n, int p); //n mod p
+long long mod(long long n, long long p); //n mod p
 
-int add_mod(int a, int b, int p); // a + b mod p
+long long add_mod(long long a, long long b, long long p); // a + b mod p
 
-int sub_mod(int a, int b, int p); // a - b mod p
+long long sub_mod(long long a, long long b, long long p); // a - b mod p
 
-int mul_mod(int a, int b, int p); // a * b mod p
+long long mul_mod(long long a, long long b, long long p); // a * b mod p
 
-int invers(int n, int p);  // inverso moltiplicativo in mod p
+long long invers(long long n, long long p);  // inverso moltiplicativo in mod p
 
-void gauss(int **m, int row, int col); // riduzione di gauss della matrice m
+void gauss(long long **m, int row, int col); // riduzione di gauss della matrice m
 
-void riduzione(int **m, int row, int col, int riga_pivot, int j);
+void riduzione(long long **m, int row, int col, int riga_pivot, int j);
 
-void swap_rows(int **m, int row, int col, int j, int i);  // scambia tra di loro due righe della matrice
+void swap_rows(long long **m, int row, int col, int j, int i);  // scambia tra di loro due righe della matrice
 
-void print_matrix (int **m, int row, int col); // stampa la matrice
+void print_matrix (long long **m, int row, int col); // stampa la matrice
 
-void init_matrix(int **m, int row, int col); //inizializza la matrice dei coefficienti
+void init_matrix(long long **m, int row, int col); //inizializza la matrice dei coefficienti
 
 //moltiplica la riga indicata per tutti i possibili monomi
-void moltiplica_riga(int ***m, int *row, int col, int riga, int **map,int * degree, int * degree_position); 
+void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int * degree_position); 
 
 //initialize the vector that keeps the number of monomial with the same grade and their position
 void init_degree_vector(int * degree, int * degree_position, int num_var);
@@ -65,53 +65,58 @@ void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
 
 
 //multiply the entire matrix for all possible correct monomial
-void moltiplica_matrice(int ***m, int *row, int col, int **map, int *degree, int *degree_position);
+void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int *degree_position);
 
 //compute the different degree of the matrix rows
-void matrix_degree(int **m, int row, int col, int *m_deg, int *degree_position);
+void matrix_degree(long long **m, int row, int col, int *m_deg, int *degree_position);
 
 //formatted print of matrix degree
 void print_matrix_degree(int *m_deg);
 
 //compute the number of null rows (rows full of 0)
-int null_rows(int **m, int row, int col);
+int null_rows(long long **m, int row, int col);
 
 //eliminate the matrix null rows (reallocation - resize)
-void eliminate_null_rows(int ***m, int *row, int col);
+void eliminate_null_rows(long long ***m, int *row, int col);
 
 //execute the multiplication, gauss reduction, elimination null_rows and compare the result to target
-void execute(int ***m, int *d_row, int col, int **map, int *degree, int *degree_position);
+void execute(long long ***m, int *d_row, int col, int **map, int *degree, int *degree_position);
 
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
 
-void matrix_alloc(int ***m, int row, int col);
+void matrix_alloc_long(long long ***m, int row, int col);
 
-void matrix_free(int ***m, int row, int col);
+void matrix_free_long(long long ***m, int row, int col);
+
+void matrix_alloc_int(int ***m, int row, int col);
+
+void matrix_free_int(int ***m, int row, int col);
 
 int main (void){
+	
 	max_degree = 7;
 	module = 773;	
-//###################################################################
-//Dichiarazioni
 
 	int row, col, num_var, degree[max_degree+1], degree_position[max_degree+1];
-	int **m, *d_row,**vet, len, **map;
+	int *d_row,**vet, len, **map;
+	long long **m;
+
 	row = 4;
 	col = 120;
 	num_var = 3;
 	d_row = &row;
 
 	len = 1+monomial_combinations(num_var, max_degree);
-	matrix_alloc(&vet,len,num_var);
+	matrix_alloc_int(&vet,len,num_var);
 	int *mon = malloc(num_var*sizeof(int));
 	monomial_computation(num_var, max_degree, vet, 0, mon);
 	free(mon);
 	qsort_r(vet, len, sizeof(int*), grevlex_comparison, &num_var);
 
-	matrix_alloc(&map,len,len);
+	matrix_alloc_int(&map,len,len);
 	setup_map(map, vet, len, num_var, max_degree);     // a questo punto posso utilizzare la mappa
-	matrix_alloc(&m,row,col); // allocazione della matrice dei coefficienti
+	matrix_alloc_long(&m,row,col); // allocazione della matrice dei coefficienti
 
 	//RISOLUZIONE PROBLEMA
 	init_matrix(m,row,col); //inizializzazione matrice
@@ -119,15 +124,15 @@ int main (void){
 	execute(&m,d_row,col,map,degree,degree_position);  //soluzione trovata
 	print_matrix(m, row, col);	 //stampa la matrice soluzione
 
-	matrix_free(&m,row,col);
-	matrix_free(&map,len,len);
-	matrix_free(&vet,len,num_var);
+	matrix_free_long(&m,row,col);
+	matrix_free_int(&map,len,len);
+	matrix_free_int(&vet,len,num_var);
 
 	return 0;
 }
 
-int mod(int n, int p){
-	int v = n;
+long long mod(long long n, long long p){
+	long long v = n;
 	if( v >= p ){
 		do{
 			v -= p;
@@ -143,9 +148,9 @@ int mod(int n, int p){
 }
 
 
-int invers(int n, int p){
-	int b0 = p, t, q;
-	int x0 = 0, x1 = 1;
+long long invers(long long n, long long p){
+	long long b0 = p, t, q;
+	long long x0 = 0, x1 = 1;
 	if (p == 1) return 1;
 	while (n > 1) {
 		q = n / p;
@@ -157,22 +162,22 @@ int invers(int n, int p){
 }
 
 
-int add_mod(int a, int b, int p){
+long long add_mod(long long a, long long b, long long p){
 	return mod((a+b),p);
 }
 
 
-int sub_mod(int a, int b, int p){
+long long sub_mod(long long a, long long b, long long p){
 	return mod((a-b),p);
 }
 
 
-int mul_mod(int a, int b, int p){
+long long mul_mod(long long a, long long b, long long p){
 	return mod((a*b),p);
 }
 
 //compute the Gauss reduction over the matrix m with specified row and column size.
-void gauss(int **m, int row, int col){
+void gauss(long long **m, int row, int col){
 	
 	int pivot_riga, pivot_colonna,righe_trovate,j;
 	
@@ -191,9 +196,10 @@ void gauss(int **m, int row, int col){
 }
 
 //compute the reduction of a single row of the matrix int the gaussian reduction
-void riduzione(int **m, int row, int col, int riga_pivot, int j){
+void riduzione(long long **m, int row, int col, int riga_pivot, int j){
 	
-	int r,k,s,inv,a;
+	int r,k;
+	long s,inv,a;
 	for( r=riga_pivot+1; r<row; r++ ){
 		if( m[r][j] != 0 ){
 			inv = invers(m[riga_pivot][j],module);			//calcola l'inverso moltiplicativo di m[riga_pivot][j] nel campo indicato
@@ -207,9 +213,10 @@ void riduzione(int **m, int row, int col, int riga_pivot, int j){
 }
 
 
-void swap_rows(int **m, int row, int col, int j, int i){
+void swap_rows(long long **m, int row, int col, int j, int i){
 	
-	int k,tmp;
+	int k;
+	long long tmp;
 	for(k=0;k<col;k++){
 		tmp = m[i][k];
 		m[i][k] = m[j][k];
@@ -218,13 +225,13 @@ void swap_rows(int **m, int row, int col, int j, int i){
 }
 
 
-void print_matrix (int **m, int row, int col){
+void print_matrix (long long **m, int row, int col){
 
 	int i,j;	
 	for (i=0;i<row;i++)
 	{
 		for (j=0;j<col;j++){
-			printf("%d ",m[i][j]);						
+			printf("%lli ",m[i][j]);						
 		}
 		printf("\n\n\n");
 	}
@@ -232,7 +239,7 @@ void print_matrix (int **m, int row, int col){
 }
 
 
-void init_matrix(int **m, int row, int col){
+void init_matrix(long long **m, int row, int col){
 
 	//prima riga
 	m[0][0] = 640;
@@ -284,7 +291,7 @@ int monomial_combinations(int n, int m) {
 }
 
 
-void moltiplica_riga(int ***m, int * row, int col, int riga, int **map,int * degree, int * degree_position){
+void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int * degree, int * degree_position){
 //moltiplica la riga indicata per ogni monomio in modo tale che il prodotto abbia grado <= del grado massimo
 
 	int grado_massimo_riga, grado_massimo_monomio,i,j,last,new_row;
@@ -305,9 +312,9 @@ void moltiplica_riga(int ***m, int * row, int col, int riga, int **map,int * deg
 		// a questo punto conosco per quanti monomi devo moltiplicare e quindi 
 		// conosco il numero di righe che devo aggiungere alla matrice
 		new_row = degree_position[grado_massimo_monomio+1]-1; //righe da aggiungere 
-		*m = realloc( *m , (*row + new_row ) * sizeof (int *));
+		*m = realloc( *m , (*row + new_row ) * sizeof (long long *));
 		for (i=(*row); i< (*row + new_row ); i++)
-			(*m)[i] = calloc(col , sizeof (int) );
+			(*m)[i] = calloc(col , sizeof (long long) );
 		for(i=1; i<degree_position[grado_massimo_monomio+1]; i++){     //scorre tutti i gradi per i quali posso moltiplicare
 			for(j=0; j<(last+1); j++)     //scorre fino all'ultimo elemento della riga
 				(*m)[*row][ map[i][j] ] = (*m)[riga][j];  //shift nella posizione corretta indicata dalla mappa
@@ -507,7 +514,7 @@ void vctcpy(int *vet1, const int *vet2, int len) {
 }
 
 
-void moltiplica_matrice(int ***m, int *row, int col, int **map, int *degree, int *degree_position){
+void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int *degree_position){
 	
 	int n,i;
 	n = *row;    //n conta il numero di righe della matrice di partenza che devo moltiplicare
@@ -515,7 +522,7 @@ void moltiplica_matrice(int ***m, int *row, int col, int **map, int *degree, int
 		moltiplica_riga(m,row,col,i,map,degree,degree_position);
 }
 
-void matrix_degree(int **m, int row, int col, int *m_deg, int *degree_position){
+void matrix_degree(long long **m, int row, int col, int *m_deg, int *degree_position){
 	
 	int i,j,last,grado;
 	for(i=0; i<row; i++){
@@ -542,7 +549,7 @@ void print_matrix_degree(int *m_deg){
 
 
 
-int null_rows(int **m, int row, int col){
+int null_rows(long long **m, int row, int col){
 	int i,j,last,null_rows;
 	null_rows = 0;
 	for(i=0; i<row; i++){
@@ -560,15 +567,15 @@ int null_rows(int **m, int row, int col){
 }
 
 
-void eliminate_null_rows(int ***m, int *row, int col){
+void eliminate_null_rows(long long ***m, int *row, int col){
 
 	int null_row = null_rows(*m,*row,col);
-	*m = realloc( *m , (*row - null_row ) * sizeof (int *));
+	*m = realloc( *m , (*row - null_row ) * sizeof (long long *));
 	*row = *row - null_row;
 }
 
 
-void execute(int ***m, int *d_row, int col, int **map, int *degree, int *degree_position){
+void execute(long long ***m, int *d_row, int col, int **map, int *degree, int *degree_position){
 
 	int *m_deg = calloc(max_degree+1, sizeof(int));
 	printf("Inizio procedura\n");
@@ -602,14 +609,27 @@ int target_degree(int *v){
 	return flag;	
 }
 
-void matrix_alloc(int ***m, int row, int col){
+void matrix_alloc_long(long long ***m, int row, int col){
+	*m = malloc(row * sizeof (long long *) );            // allocazione della matrice dei coefficienti
+	if( *m != NULL )
+		for (int i=0; i<row; i++)
+			(*m)[i] = calloc(col , sizeof (long long) );	
+}
+
+void matrix_free_long(long long ***m, int row, int col){
+	for (int i=0; i<row; i++)      
+		free((*m)[i]);
+	free(*m);	
+}
+
+void matrix_alloc_int(int ***m, int row, int col){
 	*m = malloc(row * sizeof (int *) );            // allocazione della matrice dei coefficienti
 	if( *m != NULL )
 		for (int i=0; i<row; i++)
 			(*m)[i] = calloc(col , sizeof (int) );	
 }
 
-void matrix_free(int ***m, int row, int col){
+void matrix_free_int(int ***m, int row, int col){
 	for (int i=0; i<row; i++)      
 		free((*m)[i]);
 	free(*m);	
