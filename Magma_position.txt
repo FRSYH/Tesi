@@ -1,0 +1,26 @@
+p:=773;
+P<x,y,z>:=PolynomialRing(GF(p),3, "grevlex");
+
+deg_reg:=7;
+
+riga:=Sort([ x^i*y^j*z^h : i,j,h in [0..deg_reg] |  i+j+h le deg_reg ]);
+
+
+posizione_monomi := procedure(_pol)
+	list_mon:=Monomials(P!_pol);
+        list_cof:=Coefficients(P!_pol);
+	for i in [1..#list_mon] do
+	    [list_mon[i],Position(riga,list_mon[i])-1,list_cof[i]];
+	end for;
+end procedure;	
+
+pol1:=x^2*y^2+771*x^2*y*z+x^2*z^2+771*x*y^2*z+771*x*y*z^2+431*x*y+431*x*z+328*x+y^2*z^2+431*y*z+328*y+328*z+640;
+
+pol2:=x^6+413*x^3+64*x^2+104*x+131;
+
+pol3:=y^6+657*y^3+294*y^2+486*y+356;
+
+pol4:=z^4+393*z^2+52*z+691;
+
+
+posizione_monomi(pol1);

@@ -274,6 +274,7 @@ void init_matrix(long long **m, int row, int col){
 	m[3][10] = 1;
 }
 
+
 //returns the number of all possible monomial with n variables and degree <= m
 int monomial_combinations(int n, int m) {
 
