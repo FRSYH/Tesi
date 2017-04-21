@@ -45,5 +45,6 @@ Per eseguire il programma occorre creare un file di testo contenente l'input nel
 - modulo
 - grado massimo
 - numero polinomi di partenza
+- elenco delle variabili utilizzate
 - elenco di polinomi (uno per riga, con il formato utilizzato)
 >./gm < input.txt > output.txt
