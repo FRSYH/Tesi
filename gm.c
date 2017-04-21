@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gsl/gsl_sf_gamma.h>
+#include <ctype.h>
+
 
 int max_degree = 0;
 int module = 0;
@@ -26,7 +28,7 @@ void swap_rows(long long **m, int row, int col, int j, int i);  // scambia tra d
 
 void print_matrix (long long **m, int row, int col); // stampa la matrice
 
-void init_matrix(long long **m, int row, int col); //inizializza la matrice dei coefficienti
+void init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var); //inizializza la matrice dei coefficienti
 
 //moltiplica la riga indicata per tutti i possibili monomi
 void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int * degree_position); 
@@ -85,7 +87,7 @@ void execute(long long ***m, int *d_row, int col, int **map, int *degree, int *d
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
 
-void matrix_alloc_long(long long ***m, int row, int col);
+void allocation(long long ***m, int *row, int *col, int *num_var, char **v);
 
 void matrix_free_long(long long ***m, int row, int col);
 
@@ -93,33 +95,39 @@ void matrix_alloc_int(int ***m, int row, int col);
 
 void matrix_free_int(int ***m, int row, int col);
 
+void parse(int num_var, char *vet, long long **m, int **vet_grd, int len);
+
+void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol);
+
 int main (void){
 	
-	max_degree = 7;
-	module = 773;	
 
-	int row, col, num_var, degree[max_degree+1], degree_position[max_degree+1];
+	int row, col, num_var;
 	int *d_row,**vet, len, **map;
 	long long **m;
-
-	row = 4;
-	col = 120;
-	num_var = 3;
+	char *v;
+	row = col = num_var = 0;
+	allocation(&m,&row,&col,&num_var,&v);
 	d_row = &row;
 
-	len = 1+monomial_combinations(num_var, max_degree);
+	int degree[max_degree+1], degree_position[max_degree+1];
+	len = col;
 	matrix_alloc_int(&vet,len,num_var);
+
 	int *mon = malloc(num_var*sizeof(int));
+
 	monomial_computation(num_var, max_degree, vet, 0, mon);
+
 	free(mon);
+
 	qsort_r(vet, len, sizeof(int*), grevlex_comparison, &num_var);
+
+	init_matrix(m,row,col,vet,v,num_var); //inizializzazione matrice
 
 	matrix_alloc_int(&map,len,len);
 	setup_map(map, vet, len, num_var, max_degree);     // a questo punto posso utilizzare la mappa
-	matrix_alloc_long(&m,row,col); // allocazione della matrice dei coefficienti
 
 	//RISOLUZIONE PROBLEMA
-	init_matrix(m,row,col); //inizializzazione matrice
 	init_degree_vector(degree,degree_position,num_var); 
 	execute(&m,d_row,col,map,degree,degree_position);  //soluzione trovata
 	print_matrix(m, row, col);	 //stampa la matrice soluzione
@@ -239,9 +247,9 @@ void print_matrix (long long **m, int row, int col){
 }
 
 
-void init_matrix(long long **m, int row, int col){
+void init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var){
 
-	//prima riga
+/*	//prima riga
 	m[0][0] = 640;
 	m[0][1] = 328;
 	m[0][2] = 328;
@@ -271,7 +279,10 @@ void init_matrix(long long **m, int row, int col){
 	m[3][0] = 691;
 	m[3][1] = 52;
 	m[3][4] = 393;
-	m[3][10] = 1;
+	m[3][10] = 1;   */	
+
+	parse(num_var,v,m,vet_grd,col);
+
 }
 
 
@@ -610,11 +621,38 @@ int target_degree(int *v){
 	return flag;	
 }
 
-void matrix_alloc_long(long long ***m, int row, int col){
-	*m = malloc(row * sizeof (long long *) );            // allocazione della matrice dei coefficienti
+void allocation(long long ***m, int *row, int *col, int *num_var, char **v){
+
+	scanf("%d",&module); //leggo il modulo
+	getchar();
+	scanf("%d",&max_degree); //leggo il grado massimo
+	getchar();
+	scanf("%d",row);  //leggo numero dei polinomi di partenza
+	getchar();
+
+	int i,j,k,pos_pol,num_pol;
+	char c;
+
+	i=0;
+	pos_pol = 0;
+	*v = malloc(sizeof(char));
+	c = getchar();
+	while( c != '\n' ){
+		(*v)[i] = c;
+		i++;
+		(*num_var)++;
+		*v = realloc(*v, (i+1)*sizeof(char) );
+		c = getchar();
+	}
+
+	*col = 1+monomial_combinations(*num_var, max_degree);
+
+	*m = malloc((*row) * sizeof (long long *) );            // allocazione della matrice dei coefficienti
 	if( *m != NULL )
-		for (int i=0; i<row; i++)
-			(*m)[i] = calloc(col , sizeof (long long) );	
+		for (int i=0; i<(*row); i++)
+			(*m)[i] = calloc((*col) , sizeof (long long) );	
+
+
 }
 
 void matrix_free_long(long long ***m, int row, int col){
@@ -634,4 +672,98 @@ void matrix_free_int(int ***m, int row, int col){
 	for (int i=0; i<row; i++)      
 		free((*m)[i]);
 	free(*m);	
+}
+
+void parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
+	
+	int pos_pol = 0,i,cof,col;
+	char c,* mon;
+	cof = 0;
+	c = getchar();
+
+	int *grade;
+
+	grade = calloc(3,sizeof(int));
+
+	while( c != EOF ){
+
+		while( c != '\n' && c != EOF){
+			mon = malloc( sizeof(char) );
+			i = 0;	
+			while( c != '+' && c != EOF && c != '\n'){
+				mon = realloc(mon, (i+1)* sizeof(char));
+				mon[i] = c;
+				i++;
+				c = getchar();
+			}
+			parse_mon(mon,i,&cof,num_var,vet,grade,pos_pol);
+			//printf("%s   cof:%d   grade: %d %d %d   ", mon,cof,grade[0],grade[1],grade[2]);
+
+			//inserire monomio in posizione corretta
+			col = (int **)(bsearch_r((void *) &grade, (void *) vet_grd, len, (sizeof(int*)), grevlex_comparison, &num_var)) - vet_grd;
+			m[pos_pol][col] = cof;
+			//printf("posizione colonna %d\n",col);
+			if(c=='\n'){
+				pos_pol++;
+			}
+			mon = calloc(i+1,sizeof(char));
+			grade = calloc(3,sizeof(int));
+			c = getchar();
+		}
+		c = getchar();	
+	}
+	free(mon);
+}
+
+void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol){
+
+	int i,k,pos_var;
+	char c,* cof,*var;
+	cof = malloc( sizeof(char) );
+	var = malloc( sizeof(char) );
+	i = 0;
+	pos_var = 0;
+	if( isdigit(mon[i]) != 0 ){  // se c è un numero
+		i = 0;
+		while( isdigit(mon[i]) && i<len){
+			cof = realloc(cof, (i+1) * sizeof(char));
+			cof[i] = mon[i];
+			i++;                   
+		}
+		*val = atoi(cof);
+	}else{
+		*val = 1;
+	}
+	if( i < len ){
+		while( i < len ){
+			if( mon[i] == '*' ){ 
+				i++;    
+			}
+			if( i<len && (isalpha(mon[i]) != 0) ){
+				for(k=0; k<num_var; k++){
+					if( vet[k] == mon[i] ){
+						pos_var = k;
+						break;
+					}
+				}
+				i++;
+				if( i<len ){
+					if( mon[i] == '^' ){ //ho trovato il grado della variabile
+						i++;
+						if( isdigit(mon[i]) != 0 ){
+							var[0] = mon[i];
+							grade[pos_var] = atoi(var);
+						}
+					}else{
+						grade[pos_var] = 1;	
+					}
+				}else{
+					grade[pos_var] = 1;
+				}								
+			}
+			i++;
+		}		
+	}
+	free(var);
+	free(cof);
 }
