@@ -33,3 +33,17 @@ GSL,LAPACK e BLAS non implementano aritmetica modulare
 Librerie per aritmetica modulare:
 - FLINT                                -> http://www.flintlib.org/
 - Fast Galois Field Arithmetic Library -> http://web.eecs.utk.edu/~plank/plank/papers/CS-07-593/
+
+
+ISTRUZIONI PER COMPILAZIONE ED ESECUZIONE gm.c
+
+Per compilare è necessario aver installato le librerie GSL
+>gcc gm.c -lgsl -lgslcblas -lm -o gm
+
+
+Per eseguire il programma occorre creare un file di testo contenente l'input nel formato indicato https://github.com/FRSYH/Tesi/blob/master/input.txt
+- modulo
+- grado massimo
+- numero polinomi di partenza
+- elenco di polinomi (uno per riga, con il formato utilizzato)
+>./gm < input.txt > output.txt
