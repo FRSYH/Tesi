@@ -249,38 +249,6 @@ void print_matrix (long long **m, int row, int col){
 
 void init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var){
 
-/*	//prima riga
-	m[0][0] = 640;
-	m[0][1] = 328;
-	m[0][2] = 328;
-	m[0][3] = 328;
-	m[0][5] = 431;
-	m[0][6] = 431;
-	m[0][8] = 431;
-	m[0][23] = 1;
-	m[0][24] = 771;
-	m[0][25] = 1;
-	m[0][27] = 771;
-	m[0][28] = 771;
-	m[0][32] = 1;
-	//seconda riga
-	m[1][0] = 131;
-	m[1][3] = 104;
-	m[1][9] = 64;
-	m[1][19] = 413;
-	m[1][34] = 1;
-	//terza riga
-	m[2][0] = 356;
-	m[2][2] = 486;
-	m[2][7] = 294;
-	m[2][16] = 657;
-	m[2][30] = 1;
-	//quarta riga
-	m[3][0] = 691;
-	m[3][1] = 52;
-	m[3][4] = 393;
-	m[3][10] = 1;   */	
-
 	parse(num_var,v,m,vet_grd,col);
 
 }
@@ -592,16 +560,31 @@ void execute(long long ***m, int *d_row, int col, int **map, int *degree, int *d
 	int *m_deg = calloc(max_degree+1, sizeof(int));
 	printf("Inizio procedura\n");
 	matrix_degree(*m,*d_row,col,m_deg,degree_position);
-	while( target_degree(m_deg) != 0 ){
+
+	int flag,old,new;
+	flag = old = new = 0;
+	old = *d_row;
+	while( flag != 1 ){
 		printf("\n -Eseguo moltiplicazione, ");
-		moltiplica_matrice(m,d_row,col,map,degree,degree_position);
+		moltiplica_matrice(m,d_row,col,map,degree,degree_position);  //moltiplico la matrice per tutti i monomi possibili
 		printf("numero righe: %d\n", *d_row);
 		printf(" -Eseguo Gauss, ");	
-		gauss(*m, *d_row, col);
-		eliminate_null_rows(m,d_row,col);
+		gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
+		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
   		matrix_degree(*m,*d_row,col,m_deg,degree_position);
 		printf("numero righe: %d\n", *d_row);
 		print_matrix_degree(m_deg);
+
+		new = *d_row;
+		if( old == new  ){ //se per due volte trovo una matrice con le stesso numero di righe mi fermo
+			flag = 1;
+		}else{
+			if( target_degree(m_deg) != 0 ){  //se trovo una matrice con gradi [1,2,3...,max_degree] mi fermo
+				flag = 1;
+			}else{
+				old = new; 
+			}			
+		}	
 	}
 	printf("\nFine procedura, target raggiunto\n\n");
 	free(m_deg);
