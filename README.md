@@ -35,16 +35,25 @@ Librerie per aritmetica modulare:
 - Fast Galois Field Arithmetic Library -> http://web.eecs.utk.edu/~plank/plank/papers/CS-07-593/
 
 
+
+
 ISTRUZIONI PER COMPILAZIONE ED ESECUZIONE gm.c
 
-Per compilare è necessario aver installato le librerie GSL
+Per compilare il programma è necessario aver installato le librerie GSL
 >gcc gm.c -lgsl -lgslcblas -lm -o gm
 
+Il programma necessita di dati di input, per comodità si consiglia di utilizzare un file di input.
 
 Per eseguire il programma occorre creare un file di testo contenente l'input nel formato indicato https://github.com/FRSYH/Tesi/blob/master/input.txt
-- modulo
-- grado massimo
+- modulo dei coefficienti
+- grado massimo raggiungibile
 - numero polinomi di partenza
-- elenco delle variabili utilizzate
+- elenco delle variabili utilizzate nei polinomi
 - elenco di polinomi (uno per riga, con il formato utilizzato)
 >./gm < input.txt > output.txt
+
+
+N.B. se l'input è in un formato scorretto il programma abortirà la computazione.
+N.B.2 il parser che si occupa della lettura dell'input non è ancora testato in modo ottimale, si consiglia sempre di confrontare il risultato fornito con quello di Magma.
+
+Il parser risulta comodo per inserire i dati, tuttavia il tempo impiegato per questa operazione non è da sottovalutare.
