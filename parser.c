@@ -5,10 +5,10 @@
 
 void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol){
 
-	int i,k,pos_var;
-	char c,* cof,*var;
+	int i,j,k,pos_var;
+	char c,* cof,*exp;
 	cof = malloc( sizeof(char) );
-	var = malloc( sizeof(char) );
+	exp = malloc( sizeof(char) );
 	i = 0;
 	pos_var = 0;
 	if( isdigit(mon[i]) != 0 ){  // se c è un numero
@@ -41,8 +41,19 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 					if( mon[i] == '^' ){ //ho trovato il grado della variabile
 						i++;
 						if( isdigit(mon[i]) != 0 ){
-							var[0] = mon[i];
-							grade[pos_var] = atoi(var);
+							k = 0;
+							while( isdigit(mon[i]) != 0 && i < len){
+								exp = realloc(exp, (k+1) * sizeof(char));
+								exp[k] = mon[i];
+								i++;
+								k++;
+							}
+							
+							for(j = 0; j<k-1; j++ ){
+								printf("%c ", exp[j]);
+							}
+
+							grade[pos_var] = atoi(exp);
 						}
 					}else{
 						grade[pos_var] = 1;	
@@ -54,7 +65,7 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 			i++;
 		}		
 	}
-	free(var);
+	free(exp);
 	free(cof);
 }
 

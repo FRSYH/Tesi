@@ -681,12 +681,9 @@ void parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
 				c = getchar();
 			}
 			parse_mon(mon,i,&cof,num_var,vet,grade,pos_pol);
-			//printf("%s   cof:%d   grade: %d %d %d   ", mon,cof,grade[0],grade[1],grade[2]);
-
 			//inserire monomio in posizione corretta
 			col = (int **)(bsearch_r((void *) &grade, (void *) vet_grd, len, (sizeof(int*)), grevlex_comparison, &num_var)) - vet_grd;
 			m[pos_pol][col] = cof;
-			//printf("posizione colonna %d\n",col);
 			if(c=='\n'){
 				pos_pol++;
 			}
@@ -702,9 +699,9 @@ void parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
 void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol){
 
 	int i,k,pos_var;
-	char c,* cof,*var;
+	char c,* cof,*exp;
 	cof = malloc( sizeof(char) );
-	var = malloc( sizeof(char) );
+	exp = malloc( sizeof(char) );
 	i = 0;
 	pos_var = 0;
 	if( isdigit(mon[i]) != 0 ){  // se c è un numero
@@ -735,8 +732,14 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 					if( mon[i] == '^' ){ //ho trovato il grado della variabile
 						i++;
 						if( isdigit(mon[i]) != 0 ){
-							var[0] = mon[i];
-							grade[pos_var] = atoi(var);
+							k = 0;
+							while( isdigit(mon[i]) != 0 && i < len ){
+								exp = realloc(exp, (k+1) * sizeof(char));
+								exp[k] = mon[i];
+								i++;
+								k++;
+							}
+						grade[pos_var] = atoi(exp);
 						}
 					}else{
 						grade[pos_var] = 1;	
@@ -748,6 +751,6 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 			i++;
 		}		
 	}
-	free(var);
+	free(exp);
 	free(cof);
 }
