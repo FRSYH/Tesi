@@ -576,15 +576,16 @@ void execute(long long ***m, int *d_row, int col, int **map, int *degree, int *d
 		print_matrix_degree(m_deg);
 
 		new = *d_row;
+
 		if( old == new  ){ //se per due volte trovo una matrice con le stesso numero di righe mi fermo
 			flag = 1;
 		}else{
-			if( target_degree(m_deg) != 0 ){  //se trovo una matrice con gradi [1,2,3...,max_degree] mi fermo
+			if( target_degree(m_deg) == 0 ){  //se trovo una matrice con gradi [1,2,3...,max_degree] mi fermo
 				flag = 1;
 			}else{
 				old = new; 
 			}			
-		}	
+		}
 	}
 	printf("\nFine procedura, target raggiunto\n\n");
 	free(m_deg);
