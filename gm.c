@@ -28,7 +28,7 @@ void swap_rows(long long **m, int row, int col, int j, int i);  // scambia tra d
 
 void print_matrix (long long **m, int row, int col); // stampa la matrice
 
-void init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var); //inizializza la matrice dei coefficienti
+int init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var); //inizializza la matrice dei coefficienti
 
 //moltiplica la riga indicata per tutti i possibili monomi
 void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int * degree_position); 
@@ -95,9 +95,9 @@ void matrix_alloc_int(int ***m, int row, int col);
 
 void matrix_free_int(int ***m, int row, int col);
 
-void parse(int num_var, char *vet, long long **m, int **vet_grd, int len);
+int parse(int num_var, char *vet, long long **m, int **vet_grd, int len);
 
-void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol);
+int parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol);
 
 int main (void){
 	
@@ -107,11 +107,12 @@ int main (void){
 	long long **m;
 	char *v;
 	row = col = num_var = 0;
-	allocation(&m,&row,&col,&num_var,&v);
+	allocation(&m,&row,&col,&num_var,&v);  //predispone la matrice dei coefficienti
 	d_row = &row;
 
 	int degree[max_degree+1], degree_position[max_degree+1];
 	len = col;
+
 	matrix_alloc_int(&vet,len,num_var);
 
 	int *mon = malloc(num_var*sizeof(int));
@@ -122,7 +123,11 @@ int main (void){
 
 	qsort_r(vet, len, sizeof(int*), grevlex_comparison, &num_var);
 
-	init_matrix(m,row,col,vet,v,num_var); //inizializzazione matrice
+	if( init_matrix(m,row,col,vet,v,num_var) == -1 ){ //inizializzazione matrice (lettura dati input)
+		printf("Errore di input !!!\n TERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
+		return 0;
+	}
+	 
 
 	matrix_alloc_int(&map,len,len);
 	setup_map(map, vet, len, num_var, max_degree);     // a questo punto posso utilizzare la mappa
@@ -247,9 +252,9 @@ void print_matrix (long long **m, int row, int col){
 }
 
 
-void init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var){
+int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var){
 
-	parse(num_var,v,m,vet_grd,col);
+	return parse(num_var,v,m,vet_grd,col);
 
 }
 
@@ -658,7 +663,7 @@ void matrix_free_int(int ***m, int row, int col){
 	free(*m);	
 }
 
-void parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
+int parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
 	
 	int pos_pol = 0,i,cof,col;
 	char c,* mon;
@@ -680,7 +685,9 @@ void parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
 				i++;
 				c = getchar();
 			}
-			parse_mon(mon,i,&cof,num_var,vet,grade,pos_pol);
+			if( parse_mon(mon,i,&cof,num_var,vet,grade,pos_pol) == -1 ){
+				return -1;
+			}
 			//inserire monomio in posizione corretta
 			col = (int **)(bsearch_r((void *) &grade, (void *) vet_grd, len, (sizeof(int*)), grevlex_comparison, &num_var)) - vet_grd;
 			m[pos_pol][col] = cof;
@@ -696,7 +703,7 @@ void parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
 	free(mon);
 }
 
-void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol){
+int parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol){
 
 	int i,k,pos_var;
 	char c,* cof,*exp;
@@ -713,7 +720,12 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 		}
 		*val = atoi(cof);
 	}else{
-		*val = 1;
+		if( isalpha(mon[i]) != 0 ){
+			*val = 1;
+		}else{
+			//errore
+			return -1;
+		}	
 	}
 	if( i < len ){
 		while( i < len ){
@@ -740,6 +752,9 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 								k++;
 							}
 						grade[pos_var] = atoi(exp);
+						}else{
+							//errore
+							return -1;									
 						}
 					}else{
 						grade[pos_var] = 1;	
@@ -747,6 +762,9 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 				}else{
 					grade[pos_var] = 1;
 				}								
+			}else{
+				//errore
+				return -1;				
 			}
 			i++;
 		}		

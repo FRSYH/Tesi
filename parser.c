@@ -3,7 +3,7 @@
 #include <ctype.h>
 
 
-void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol){
+int parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol){
 
 	int i,j,k,pos_var;
 	char c,* cof,*exp;
@@ -20,7 +20,12 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 		}
 		*val = atoi(cof);
 	}else{
-		*val = 1;
+		if( isalpha(mon[i]) != 0 ){
+			*val = 1;
+		}else{
+			//errore
+			return -1;
+		}			
 	}
 	if( i < len ){
 		while( i < len ){
@@ -48,12 +53,10 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 								i++;
 								k++;
 							}
-							
-							for(j = 0; j<k-1; j++ ){
-								printf("%c ", exp[j]);
-							}
-
 							grade[pos_var] = atoi(exp);
+						}else{
+							//errore
+							return -1;									
 						}
 					}else{
 						grade[pos_var] = 1;	
@@ -61,6 +64,9 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 				}else{
 					grade[pos_var] = 1;
 				}								
+			}else{
+				//errore
+				return -1;				
 			}
 			i++;
 		}		
@@ -70,7 +76,7 @@ void parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade
 }
 
 
-void parse(int num_var, char *vet){
+int parse(int num_var, char *vet){
 	
 	int pos_pol = 0,i,cof;
 	char c,* mon;
@@ -92,8 +98,12 @@ void parse(int num_var, char *vet){
 				i++;
 				c = getchar();
 			}
-			parse_mon(mon,i,&cof,num_var,vet,grade,pos_pol);
-			printf("%s   cof:%d   grade: %d %d %d \n", mon,cof,grade[0],grade[1],grade[2]);
+			if( parse_mon(mon,i,&cof,num_var,vet,grade,pos_pol) == -1 ){
+				return -1;
+			}else{
+				printf("%s   cof:%d   grade: %d %d %d \n", mon,cof,grade[0],grade[1],grade[2]);
+			}
+			
 
 			//inserire monomio in posizione corretta
 
@@ -129,7 +139,9 @@ int main (void){
 		v = realloc(v, (i+1)*sizeof(char) );
 		c = getchar();
 	}
-	parse(num_var,v);
+	if( parse(num_var,v) == -1 ){
+		printf("Errore di input\n");
+	}
 	
 	free(v);
 
