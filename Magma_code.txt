@@ -1,0 +1,253 @@
+p:=773;
+
+P<x,y,z>:=PolynomialRing(GF(p),3, "grevlex");
+
+deg_reg:=7;
+
+riga:=Sort([ x^i*y^j*z^h : i,j,h in [0..deg_reg] |  i+j+h le deg_reg ]);
+
+M1:=Matrix(GF(p),#riga*100,#riga,[]);
+
+//Position(riga,y^3); ritorna posizione oggetto in lista
+
+inserpol := procedure(_pol,num_riga,~_M)
+
+local list_mon;
+
+list_mon:=Monomials(P!_pol);
+
+for _m in list_mon do
+
+  _M[num_riga][Position(riga,_m)]:=Coefficients(P!_pol)[Position(list_mon,_m)];
+
+end for;
+end procedure;
+
+pol1:=x^2*y^2+771*x^2*y*z+x^2*z^2+771*x*y^2*z+771*x*y*z^2+431*x*y+431*x*z+328*x+y^2*z^2+431*y*z+328*y+328*z+640;
+
+pol2:=x^4+413*x^3+64*x^2+104*x+131;
+
+pol3:=y^4+657*y^3+294*y^2+486*y+356;
+
+pol4:=z^3+393*z^2+52*z+691;
+
+inserpol(pol1,1,~M1);
+
+inserpol(pol2,2,~M1);
+
+inserpol(pol3,3,~M1);
+
+inserpol(pol4,4,~M1);
+
+//pol1:=y^2+x+1;
+
+//pol2:=2*y^2+1;
+
+//inserpol(pol1,1,~M);
+
+//inserpol(pol2,2,~M);
+
+scorri:=function(_M)
+local l,h;
+
+l:=0; nr:=NumberOfRows(_M);
+
+for i in [1..nr] do
+
+if Weight(_M[i]) eq 0 then  l:=i; break; end if;
+
+end for;
+
+return l;
+
+end function;
+
+target:=deg_reg;
+
+moltiplica := procedure(num_riga,~_M)
+
+local riga_goal, local_target, local_riga;
+
+local max;
+
+max:=riga[Max({i: i in [1..#riga] | _M[num_riga][i] ne 0})];
+
+local_target:= target-Degree(max);
+
+local_riga:=[ _r: _r in riga | Degree(_r) le local_target and Degree(_r) ne 0];
+
+//local_riga;
+
+for _m in local_riga do
+
+ riga_goal:=scorri(_M);
+
+ if Weight(_M[riga_goal]) ne 0 then
+
+   print("help!");
+
+ end if;
+
+ for i in [1..#riga] do
+
+   if _M[num_riga][i] ne 0 then
+
+    //[ riga[i], _m, riga[i]*_m];
+
+     _M[riga_goal][Position(riga,riga[i]*_m)] := _M[num_riga][i];
+
+   end if;
+
+ end for;
+
+end for;
+
+end procedure;
+
+
+
+leggiriga:=function(num_riga, _M)
+
+local somma,nc,nr; nc:=NumberOfColumns(_M); nr:=NumberOfRows(_M);
+
+somma:=0;
+
+for i in [1..nc] do
+
+somma:=somma+riga[i]*_M[num_riga][i];
+
+end for;
+
+return somma;
+
+end function;
+
+
+
+moltiplica(1,~M1);
+
+moltiplica(2,~M1);
+
+moltiplica(3,~M1);
+
+moltiplica(4,~M1);
+
+
+swap:=procedure(riga1,riga2,~_M)
+
+local L1,L2,nc,nr; nr:=NumberOfRows(_M); nc:=NumberOfColumns(_M);
+
+L1:=[ _M[riga1][i]: i in [1..nc]]; L2:=[ _M[riga2][i]: i in [1..nc]];
+
+for i in [1..nc] do  _M[riga1][i]:= L2[i]; _M[riga2][i]:=L1[i]; end for;
+
+end procedure;
+
+
+
+riduzione:=procedure(~_M, riga_pivot,j)
+
+local s,nc,nr;
+
+nc:=NumberOfColumns(_M); nr:=NumberOfRows(_M);
+
+for righina in [riga_pivot+1..nr] do
+
+ if righina eq riga_pivot then continue righina; end if;
+
+ if _M[righina][j] ne 0 then
+
+   s:=(1/_M[riga_pivot][j])*_M[righina][j];
+
+  for k in [1..nc] do
+
+     _M[righina][k]:=_M[righina][k]-s*_M[riga_pivot][k];
+
+  end for;
+
+end if;
+
+end for;
+
+end procedure;
+
+
+gauss:=procedure(~_M)
+local pivot_col, pivot_riga;
+local trovata_riga, nc, nr;
+nc:=NumberOfColumns(_M);
+nr:=NumberOfRows(_M);
+//[nr,nc];
+
+trovate_righe:=0;
+for j in [1..nc] do
+ pivot_col:=nc-j+1;
+ for pivot_riga  in [1+trovate_righe..nr] do
+   if _M[pivot_riga][pivot_col] ne 0 then
+      //[pivot_riga,pivot_col];
+      riduzione(~_M,pivot_riga,pivot_col);
+
+      trovate_righe:=trovate_righe+1;
+      swap(trovate_righe,pivot_riga,~_M);
+      break;
+
+   end if;
+end for;
+end for;
+end procedure;
+
+//se tt le righe grado >=2 bisogna ripartire con 7
+
+//se no finito
+
+#{i: i in [1..NumberOfRows(M1)] | Weight(M1[i]) ne 0};
+
+{Degree(leggiriga(i,M1)): i in [1..NumberOfRows(M1)] };
+
+time gauss(~M1);
+
+#{i: i in [1..NumberOfRows(M1)] | Weight(M1[i]) ne 0};
+
+{Degree(leggiriga(i,M1)): i in [1..NumberOfRows(M1)] };
+
+time for i in [1..NumberOfRows(M1)] do
+
+  if Weight(M1[i]) ne 0 then
+
+   moltiplica(i,~M1);
+
+ end if;
+
+end for;
+
+#{i: i in [1..NumberOfRows(M1)] | Weight(M1[i]) ne 0};
+
+{Degree(leggiriga(i,M1)): i in [1..NumberOfRows(M1)] };
+
+
+time gauss(~M1);
+
+#{i: i in [1..NumberOfRows(M1)] | Weight(M1[i]) ne 0};
+
+{Degree(leggiriga(i,M1)): i in [1..NumberOfRows(M1)] };
+
+
+time for i in [1..NumberOfRows(M1)] do
+
+  if Weight(M1[i]) ne 0 then
+
+   moltiplica(i,~M1);
+
+ end if;
+
+end for;
+
+#{i: i in [1..NumberOfRows(M1)] | Weight(M1[i]) ne 0};
+
+{Degree(leggiriga(i,M1)): i in [1..NumberOfRows(M1)] };
+
+time gauss(~M1);
+
+#{i: i in [1..NumberOfRows(M1)] | Weight(M1[i]) ne 0};
+
+{Degree(leggiriga(i,M1)): i in [1..NumberOfRows(M1)] };
