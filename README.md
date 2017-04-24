@@ -37,23 +37,27 @@ Librerie per aritmetica modulare:
 
 
 
-ISTRUZIONI PER COMPILAZIONE ED ESECUZIONE gm.c
+ISTRUZIONI PER COMPILAZIONE ED ESECUZIONE PROGRAMMA
 
-Per compilare il programma è necessario aver installato le librerie GSL
+Tutto il programma è contenuto nel file gm.c 
+Il programma deve essere eseguito su sistemi Unix (su windows manca una metodo delle librerie standard di C).
+
+Per compilare il programma è necessario aver installato le librerie GSL.
 >gcc gm.c -lgsl -lgslcblas -lm -o gm
 
 Il programma necessita di dati di input, per comodità si consiglia di utilizzare un file di input.
 
-Per eseguire il programma occorre creare un file di testo contenente l'input nel formato indicato https://github.com/FRSYH/Tesi/blob/master/input.txt
+Per eseguire il programma occorre fornire i dati di input (esempio di file di input https://github.com/FRSYH/Tesi/blob/master/input.txt ) nel seguente ordine e formato.
 - modulo dei coefficienti
 - grado massimo raggiungibile
 - numero polinomi di partenza
-- elenco delle variabili utilizzate nei polinomi
-- elenco di polinomi (uno per riga, con il formato utilizzato)
+- elenco delle variabili utilizzate nei polinomi (su una sola riga in ordine alfabetico)
+- elenco di polinomi (uno per riga, con il formato utilizzato da Magma, esempio nel file)
 >./gm < input.txt > output.txt
 
 
 N.B. se l'input è in un formato scorretto il programma abortirà la computazione.
+
 N.B.2 il parser che si occupa della lettura dell'input non è ancora testato in modo ottimale, si consiglia sempre di confrontare il risultato fornito con quello di Magma.
 
 Il parser risulta comodo per inserire i dati, tuttavia il tempo impiegato per questa operazione non è da sottovalutare.
