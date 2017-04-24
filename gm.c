@@ -97,7 +97,7 @@ void matrix_free_int(int ***m, int row, int col);
 
 int parse(int num_var, char *vet, long long **m, int **vet_grd, int len);
 
-int parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol);
+int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *grade, int pos_pol);
 
 int main (void){
 	
@@ -665,9 +665,9 @@ void matrix_free_int(int ***m, int row, int col){
 
 int parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
 	
-	int pos_pol = 0,i,cof,col;
+	int pos_pol = 0,i,col;
 	char c,* mon;
-	cof = 0;
+	long long cof = 0;
 	c = getchar();
 
 	int *grade;
@@ -703,7 +703,7 @@ int parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
 	free(mon);
 }
 
-int parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol){
+int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *grade, int pos_pol){
 
 	int i,k,pos_var;
 	char c,* cof,*exp;
@@ -718,10 +718,13 @@ int parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade,
 			cof[i] = mon[i];
 			i++;                   
 		}
-		*val = atoi(cof);
+		*val = mod(atoll(cof),module);
+
+		//printf("val: %lli\n", *val);
 	}else{
 		if( isalpha(mon[i]) != 0 ){
 			*val = 1;
+			//printf("val: %lli\n", *val);
 		}else{
 			//errore
 			return -1;

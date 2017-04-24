@@ -3,7 +3,7 @@
 #include <ctype.h>
 
 
-int parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade, int pos_pol){
+int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *grade, int pos_pol){
 
 	int i,j,k,pos_var;
 	char c,* cof,*exp;
@@ -18,7 +18,7 @@ int parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade,
 			cof[i] = mon[i];
 			i++;                   
 		}
-		*val = atoi(cof);
+		*val = atoll(cof);
 	}else{
 		if( isalpha(mon[i]) != 0 ){
 			*val = 1;
@@ -78,9 +78,9 @@ int parse_mon(char * mon, int len,int * val, int num_var, char *vet, int *grade,
 
 int parse(int num_var, char *vet){
 	
-	int pos_pol = 0,i,cof;
+	int pos_pol = 0,i;
 	char c,* mon;
-	cof = 0;
+	long long cof = 0;
 	c = getchar();
 
 	int *grade;
@@ -101,7 +101,7 @@ int parse(int num_var, char *vet){
 			if( parse_mon(mon,i,&cof,num_var,vet,grade,pos_pol) == -1 ){
 				return -1;
 			}else{
-				printf("%s   cof:%d   grade: %d %d %d \n", mon,cof,grade[0],grade[1],grade[2]);
+				printf("%s   cof:%lli   grade: %d %d %d \n", mon,cof,grade[0],grade[1],grade[2]);
 			}
 			
 
