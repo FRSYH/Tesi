@@ -8,7 +8,7 @@
 
 
 int max_degree = 0;
-int module = 0;
+long long module = 0;
 
 long long mod(long long n, long long p); //n mod p
 
@@ -145,16 +145,15 @@ int main (void){
 }
 
 long long mod(long long n, long long p){
-	long long v = n;
+	long long v = n,x =0;
 	if( v >= p ){
-		do{
-			v -= p;
-		}while( v >= p );
+		x = n/p;
+		v = n-(x*p);
 	}else{
 		if( v < 0 ){
-			do{
-				v += p;
-			}while( v < 0 );
+			x = n/p;
+			v = n-(x*p);
+			v += p;
 		}
 	}	
 	return v;
@@ -212,7 +211,7 @@ void gauss(long long **m, int row, int col){
 void riduzione(long long **m, int row, int col, int riga_pivot, int j){
 	
 	int r,k;
-	long s,inv,a;
+	long long s,inv,a;
 	for( r=riga_pivot+1; r<row; r++ ){
 		if( m[r][j] != 0 ){
 			inv = invers(m[riga_pivot][j],module);			//calcola l'inverso moltiplicativo di m[riga_pivot][j] nel campo indicato
@@ -221,6 +220,7 @@ void riduzione(long long **m, int row, int col, int riga_pivot, int j){
 				a = mul_mod(s,m[riga_pivot][k],module);
 				m[r][k] = sub_mod(m[r][k],a,module);
 			}
+			
 		}
 	}
 }
@@ -503,8 +503,9 @@ void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degre
 	
 	int n,i;
 	n = *row;    //n conta il numero di righe della matrice di partenza che devo moltiplicare
-	for(i=0; i<n; i++)
+	for(i=0; i<n; i++){
 		moltiplica_riga(m,row,col,i,map,degree,degree_position);
+	}
 }
 
 void matrix_degree(long long **m, int row, int col, int *m_deg, int *degree_position){
@@ -571,9 +572,11 @@ void execute(long long ***m, int *d_row, int col, int **map, int *degree, int *d
 	old = *d_row;
 	while( flag != 1 ){
 		printf("\n -Eseguo moltiplicazione, ");
+		fflush(stdout);
 		moltiplica_matrice(m,d_row,col,map,degree,degree_position);  //moltiplico la matrice per tutti i monomi possibili
-		printf("numero righe: %d\n", *d_row);
-		printf(" -Eseguo Gauss, ");	
+		printf("numero righe: %d", *d_row);
+		printf("\n -Eseguo Gauss, ");
+		fflush(stdout);	
 		gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
   		matrix_degree(*m,*d_row,col,m_deg,degree_position);
@@ -612,7 +615,7 @@ int target_degree(int *v){
 
 void allocation(long long ***m, int *row, int *col, int *num_var, char **v){
 
-	scanf("%d",&module); //leggo il modulo
+	scanf("%lli",&module); //leggo il modulo
 	getchar();
 	scanf("%d",&max_degree); //leggo il grado massimo
 	getchar();
