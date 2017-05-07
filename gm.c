@@ -31,13 +31,13 @@ void print_matrix (long long **m, int row, int col); // stampa la matrice
 int init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var); //inizializza la matrice dei coefficienti
 
 //moltiplica la riga indicata per tutti i possibili monomi
-void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int * degree_position); 
+void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int **vet, int num_var); 
 
 //initialize the vector that keeps the number of monomial with the same grade and their position
-void init_degree_vector(int * degree, int * degree_position, int num_var);
+void init_degree_vector(int * degree, int num_var);
 
 //return the grade of a monomial
-int grado_monomio(int posizione, int *degree_position);
+int grado_monomio(int posizione, int **vet, int num_var);
 
 int combination(int n, int k);
 
@@ -71,10 +71,10 @@ void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
 
 
 //multiply the entire matrix for all possible correct monomial
-void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int *degree_position);
+void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int **vet, int num_var);
 
 //compute the different degree of the matrix rows
-void matrix_degree(long long **m, int row, int col, int *m_deg, int *degree_position);
+void matrix_degree(long long **m, int row, int col, int *m_deg, int **vet, int num_var);
 
 //formatted print of matrix degree
 void print_matrix_degree(int *m_deg);
@@ -86,7 +86,7 @@ int null_rows(long long **m, int row, int col);
 void eliminate_null_rows(long long ***m, int *row, int col);
 
 //execute the multiplication, gauss reduction, elimination null_rows and compare the result to target
-void execute(long long ***m, int *d_row, int col, int **map, int *degree, int *degree_position);
+void execute(long long ***m, int *d_row, int col, int **map, int *degree, int **vet, int num_var);
 
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
@@ -114,7 +114,7 @@ int main (void){
 	allocation(&m,&row,&col,&num_var,&v);  //predispone la matrice dei coefficienti
 	d_row = &row;
 
-	int degree[max_degree+1], degree_position[max_degree+1];
+	int degree[max_degree+1];
 	len = col;
 
 	vet = monomial_computation(num_var, max_degree, len);
@@ -132,8 +132,8 @@ int main (void){
 	setup_map(map, vet, len, num_var, max_degree);     // a questo punto posso utilizzare la mappa
 
 	//RISOLUZIONE PROBLEMA
-	init_degree_vector(degree,degree_position,num_var); 
-	execute(&m,d_row,col,map,degree,degree_position);  //soluzione trovata
+	init_degree_vector(degree,num_var); 
+	execute(&m,d_row,col,map,degree,vet,num_var);  //soluzione trovata
 	print_matrix(m, row, col);	 //stampa la matrice soluzione
 
 	matrix_free_long(&m,row,col);
@@ -290,7 +290,7 @@ Il parametro map fornisce una mappa delle posizioni in cui inserire il prodotto 
 La matrice aumenta il numero di righe in base a quanti prodotti devo eseguire.
 Gli ultimi due parametri servono per il calcolo del grado di un monomio.
 */
-void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int * degree, int * degree_position){
+void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int * degree, int **vet, int num_var){
 
 
 	int grado_massimo_riga, grado_massimo_monomio,i,j,last,new_row;
@@ -305,17 +305,24 @@ void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int
 	//risalgo al grado del monomio appena trovato
 	//scorro la lista delle posizioni di inizio dei monomi con lo stesso grado
 	if( last != -1 ){
-		grado_massimo_riga = grado_monomio(last,degree_position);
+
+		grado_massimo_riga = grado_monomio(last,vet,num_var);		
 
 		//calcolo il grado massimo che deve avere il monomio per cui moltiplicare		
 		grado_massimo_monomio = max_degree - grado_massimo_riga;		
 		// a questo punto conosco per quanti monomi devo moltiplicare e quindi 
 		// conosco il numero di righe che devo aggiungere alla matrice
-		new_row = degree_position[grado_massimo_monomio+1]-1; //righe da aggiungere 
+		new_row = 0;
+		for(i=1; i<(grado_massimo_monomio+1); i++){
+			new_row += degree[i];
+		}
+
 		*m = realloc( *m , (*row + new_row ) * sizeof (long long *));
+
 		for (i=(*row); i< (*row + new_row ); i++)
 			(*m)[i] = calloc(col , sizeof (long long) );
-		for(i=1; i<degree_position[grado_massimo_monomio+1]; i++){      //scorre tutti i gradi per i quali posso moltiplicare
+
+		for(i=1; i<(new_row+1); i++){     								//scorre tutti i monomi per i quali posso moltiplicare
 			for(j=0; j<(last+1); j++)     								//scorre fino all'ultimo elemento della riga
 				(*m)[*row][ map[i][j] ] = (*m)[riga][j];  				//shift nella posizione corretta indicata dalla mappa
 			*row = *row + 1;											//aumento del conteggio delle righe
@@ -324,37 +331,25 @@ void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int
 }
 
 
-int grado_monomio(int posizione, int *degree_position){
-//Calcola il grado del monomio a partire dalla posizione occupata nella matrice (la posizione occupata deve essere corretta).	
+
+int grado_monomio(int posizione, int **vet, int num_var){
+//Calcola il grado del monomio a partire dalla posizione occupata nel vettore (ordinato) delle posizioni rispetto l'ordinamento scelto.
+//(la posizione occupata deve essere corretta).	
 	int i,grado;
-	grado = max_degree;
-	for(i=0; i<max_degree+1; i++){
-		if( degree_position[i] > posizione ){
-			grado = i-1;
-			break;	
-		}			
+	grado = 0;
+	for(i=0; i<num_var; i++){
+		grado += vet[posizione][i];
 	}
 	return grado;
 }
 
 
-
-void init_degree_vector(int * degree, int * degree_position, int num_var){
+void init_degree_vector(int * degree, int num_var){
 //inizializza il vettore degree con il numero di monomi di grado i-esimo <= del grado massimo
-//inizializza il vettore degree_position con la posizione di inizio del gruppo di monomi dello stesso grado
-
 	int i,j,c;
 	for(i=0; i<max_degree+1; i++){
 		c = combination(num_var,i);
 		degree[i] = c;
-	}
-	degree_position[0] = 0;
-	for(i=1; i<max_degree+1; i++){
-		c = 0;		
-		for(j=0; j<i; j++){
-			c += degree[j];
-		}
-		degree_position[i] = c;
 	}
 }
 
@@ -559,17 +554,17 @@ void vctcpy(int *vet1, const int *vet2, int len) {
 }
 
 
-void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int *degree_position){
+void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int **vet, int num_var){
 //Moltiplica tutte le righe della matrice m per tutti i monomi possibili che forniscono un risultato che ha grado <= grado massimo.	
 	int n,i;
 	n = *row;    //n conta il numero di righe della matrice di partenza che devo moltiplicare
 	for(i=0; i<n; i++){
-		moltiplica_riga(m,row,col,i,map,degree,degree_position);
+		moltiplica_riga(m,row,col,i,map,degree,vet,num_var);
 	}
 }
 
 
-void matrix_degree(long long **m, int row, int col, int *m_deg, int *degree_position){
+void matrix_degree(long long **m, int row, int col, int *m_deg, int **vet, int num_var){
 //m_deg è un vettore che ha lunghezza pari al grado massimo.
 //la funzione calcola i gradi dei polinomi presenti nella matrice.
 //Ogni cella del vettore m_deg rappresenta un grado, se esso compare nella matrice allora viene impostato a 1 o altrimenti.	
@@ -582,7 +577,7 @@ void matrix_degree(long long **m, int row, int col, int *m_deg, int *degree_posi
 				break;
 			}
 		}
-		grado = grado_monomio(last,degree_position);	
+		grado = grado_monomio(last,vet,num_var);	
 		m_deg[grado] = 1;		
 	}
 }
@@ -633,7 +628,7 @@ void eliminate_null_rows(long long ***m, int *row, int col){
 }
 
 
-void execute(long long ***m, int *d_row, int col, int **map, int *degree, int *degree_position){
+void execute(long long ***m, int *d_row, int col, int **map, int *degree, int **vet, int num_var){
 /*
 Questa funzione itera la procedura di moltiplicazione della matrice e la riduzione di Gauss fino a che non si raggiunge la terminazione.
 La terminazione è data da:
@@ -643,7 +638,7 @@ La terminazione è data da:
 */
 	int *m_deg = calloc(max_degree+1, sizeof(int));
 	printf("Inizio procedura\n");
-	matrix_degree(*m,*d_row,col,m_deg,degree_position);
+	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
 	int flag,old,new;
 	flag = old = new = 0;
@@ -651,13 +646,13 @@ La terminazione è data da:
 	while( flag != 1 ){
 		printf("\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
-		moltiplica_matrice(m,d_row,col,map,degree,degree_position);  //moltiplico la matrice per tutti i monomi possibili
+		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);  //moltiplico la matrice per tutti i monomi possibili
 		printf("numero righe: %d", *d_row);
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);	
 		gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
-  		matrix_degree(*m,*d_row,col,m_deg,degree_position);
+  		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 		printf("numero righe: %d\n", *d_row);
 		print_matrix_degree(m_deg);
 
