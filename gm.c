@@ -44,9 +44,13 @@ int combination(int n, int k);
 //returns the number of all possible monomial with n variables and degree <= m
 int monomial_combinations(int n, int m); 
 
+//restituisce un array contenente tutti i len monomi con n variabili e grado <= m
+//len è il numero di possibili monomi con n variabili e grado <= m
+int **monomial_computation(int n, int m, int len);
+
 //computes all possible monomials with n variables and degree <= m
 //saves them into array vet, see the definition for more informations
-void monomial_computation(int n, int m,  int **vet, int turn, int *monomial);
+void monomial_computation_rec(int n, int m,  int **vet, int turn, int *monomial, int *pos);
 
 //copies vector vet2 into vet1 of length len
 void vctcpy(int *vet1, int const *vet2, int len);
@@ -113,13 +117,8 @@ int main (void){
 	int degree[max_degree+1], degree_position[max_degree+1];
 	len = col;
 
-	matrix_alloc_int(&vet,len,num_var);
+	vet = monomial_computation(num_var, max_degree, len);
 
-	int *mon = malloc(num_var*sizeof(int));
-
-	monomial_computation(num_var, max_degree, vet, 0, mon);
-
-	free(mon);
 
 	qsort_r(vet, len, sizeof(int*), grevlex_comparison, &num_var);
 
@@ -368,25 +367,38 @@ int combination(int n, int k){
 	return  a/(c*b);
 }
 
-
-//maps all the possible multiplications of the monomials of n variables and
-//degree <= m in the array vet of length len into the matrix map[len][len]
-//sets the value to -1 if the multiplication exceeds vet
+/*
+mappa tutte le possibili moltiplicazioni dei monomi di n variabili e grado <= m
+dell'array vet di lunghezza len, nella matrice map[len][len].
+Al termine map[x][y] contiene la posizione all'interno di vet del
+monomio risultato dal prodotto di vet[x]*vet[y]
+Esempio: vet[4] * vet[10] = vet [map[4][10]] 
+se il grado del prodotto supera m viene messo il valore -1 nella matrice
+la matrice map deve essere già correttamente allocata
+l'arrey vet deve essere ordinato secondo grevlex
+*/
 void setup_map(int **map, int **vet, int len, int n, int m) {
 
 	int sum, *temp = malloc(n * sizeof(int));
+	
+	//per ogni monomio in vet
 	for (int row = 0; row < len; row++)
+		//provo a moltiplicarlo con ogni monomio in vet
 		for (int col = 0; col < len; col++) {
 			sum = 0;
+			//eseguo il prodotto (sum è la somma dei gradi)
 			for (int v = 0; v < n; v++) {
 				temp[v] = vet[row][v] + vet[col][v];
 				sum += temp[v];
 			}
+			//se il grado del prodotto > grado massimo tutti i restanti prodotti
+			//su quella riga sono > grado massimo, setto a -1 il resto della riga
 			if (sum > m) {
 				for (int i = col; i < len; i++)
 					map[row][i] = -1;
 				break;	
 			}
+			//altrimenti cerco il prodotto in vet e metto l'indice in map
 			else
 				map[row][col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), grevlex_comparison, &n)) - vet;
 		}
@@ -395,7 +407,11 @@ void setup_map(int **map, int **vet, int len, int n, int m) {
 
 
 //https://git.devuan.org/jaretcantu/eudev/commit/a9e12476ed32256690eb801099c41526834b6390
-//missing in stdlib, counterpart of qsort_r
+//mancante nella stdlib, controparte di qsort_r
+//effettua una ricerca binaria di key nell'array base di lunghezza nmemb i cui elementi
+//hanno dimensione size, e restituisce un puntatore all'elemento uguale a key se c'è, altrimenti NULL.
+//compar è la funzione di ordinamento con cui viene confrontato key con base
+//arg è il terzo argomento di compar
 void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
                  int (*compar) (const void *, const void *, void *),
                  void *arg) {
@@ -419,9 +435,10 @@ void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
 	return NULL;
 }
 
-//compares two monomials of n variables following the grevlex order
-//returns a positive number if mon1 > mon2, 0 if they are equal, negative otherwise
-//various casts are made to achive compatibility with qsort_r
+//confronta due monomi di *arg variabili secondo l'ordinamento grevlex
+//restituisce un intero positivo se monom1 > monom2, zero se sono uguali, uno negativo altrimenti
+//i monomi sono sempre rappresentati come array di lunghezza pari al numero delle variabili
+//sono fatti diversi cast perchè il tipo degli argomenti è compatibile con qsort_r
 int grevlex_comparison(const void *monom1, const void *monom2, void *arg) {
 
 	int degree1 = 0, degree2 = 0, n, *mon1, *mon2;
@@ -429,6 +446,7 @@ int grevlex_comparison(const void *monom1, const void *monom2, void *arg) {
 	mon1 = *((int **) monom1);
 	mon2 = *((int **) monom2);
 	
+	//calcolo i gradi dei monomi
 	for (int v = 0; v < n; v++) {
 		degree1 += mon1[v];
 		degree2 += mon2[v];
@@ -437,6 +455,8 @@ int grevlex_comparison(const void *monom1, const void *monom2, void *arg) {
 		return 1;
 	else if (degree1 < degree2)
 		return -1;
+	//se il grado è uguale guardo l'utlima cifra non nulla
+	//del array risultante dalla sottrazione dei monomi
 	else {
 		int *temp = malloc(n * sizeof(int));
 		for (int v = 0; v < n; v++)
@@ -445,71 +465,93 @@ int grevlex_comparison(const void *monom1, const void *monom2, void *arg) {
 			if (temp[v] != 0) {
 				return -temp[v];
 				free(temp);
-				//to avoid freeing the same pointer twice
+				//per evitare di fare free due volte sul  puntatore lo setto a NULL dopo la free
 				temp = NULL;
 			}
 		}
-				free(temp);
+		free(temp);
 	}	
 	return 0;
 }
 
 
-/*recursive function that computes all possible monomials with n variables
-and degree <= m, saves them into array vet. A monomial is represented as an
-array of int, where each positions describes the degree of the variable.
-The array has to be initialized with the correct length.
-Other parameters are need for recursive structure and should always be
-turn = 0 represents the position of the variable in the monomial
-monomial = array of int of length n used to compute the various permutations
+/*restituisce un array contenente tutti i len monomi con n variabili e grado <= m
+len è il numero di possibili monomi con n variabili e grado <= m
+i monomi sono array di interi di lunghezza n dove il valore di ogni posizione rappresenta
+il grado della variabile in quella posizione. Esempio: n=3, x^2*y*z = [2,1,1]
+len viene passato come argomento per evitare di ricalcolarlo internamente
 */
-void monomial_computation(int n, int m, int **vet, int turn, int *monomial) {
+int **monomial_computation(int n, int m, int len) {
 
-	//s keeps track of the monomial already saved in the array vet
-	//static becasue it must keep values through the recursive calls
-	//no thread safe
-	static int s = 0;
-	//for every variable try all degrees from 0 to m
+	int **vet, *monomial;
+	
+	//alloco la memoria per l'array
+	matrix_alloc_int(&vet,len,n);
+	
+	//strutture di supporto necessarie per il calcolo
+	monomial = malloc(n * sizeof(int));
+	int pos = 0;
+	
+	//il calcolo è fatto dalla funzione ricorsiva correttemente parametrizzata
+	monomial_computation_rec(n, m, vet, 0, monomial, &pos);
+	
+	free(monomial);
+	
+	return vet;
+}
+
+
+
+/*funzione ricorsiva che calcola tutti i possibili monomi con n variabili e grado <= m
+e li inserisce nell'array vet. I monomi sono rappresentati come array di interi dove
+il valore di ogni posizione rappresenta il grado della variabile in quella posizione.
+Esempio: n=3, x^2*y*z = [2,1,1].
+L'array vet deve essere già allocato correttamente. Gli altri parametri sono necessari
+per la struttura ricorsiva della funzione e alla prima chiamata devono essere:
+- turn = 0, rappresenta la posizione della variabile nel monomio
+- monomial = array di interi di lunghezza n già allocato e usato per calcolare i vari monomi
+- *pos = 0 puntatore ad intero, rappresenta la prima posizione libera nell'array vet
+*/
+void monomial_computation_rec(int n, int m, int **vet, int turn, int *monomial, int *pos) {
+
+	//per ogni variabile provo tutti i gradi da 0 a m
 	for (int degree = 0; degree <= m; degree++) {
-		//if this is the first variable all other variables have looped
+		//se questa è la prima variabile azzero il monomio
 		if (turn == 0) {
-			//reset the monomial with only your degree
+			//azzero il monomio lasciando solo il grado della prima variabile
 			monomial[0] = degree;
 			for (int v = 1; v < n; v++)
 				monomial[v] = 0;		
 		}
-		//other variables add their values to the monomial
+		//altrimenti le altre variabili aggiungo il proprio grado al monomio
 		else
 			monomial[turn] = degree;
-		//get total degree of monomial by adding the variables degrees together
+		
+		
+		//ottengo il grado del monomio sommando i gradi delle variabili
 		int sum = 0;
 		for (int v = 0; v <= turn; v++)
 			sum += monomial[v];
-		//if the degree of the monomial exceeds the maximum it's pointless to continue
-		//looping searching for other monomials since they all have degree >=
+		//se il grado del monomio supera quello massimo non ha senso continuare a cercare
+		//altri monomi partendo da questo, perchè tutti avranno grado maggiore o uguale
 		if (sum > m)
 			break;
-		//if this is the last variable and we haven't broke out with the previous condition
-		//copy this monomial to the vecor vet and increase the index to the vector
+
+		//se questa è l'ultima variabile copia il monomio nell'array vet and incrementa l'indice pos
 		if (turn == (n-1)) {
-			vctcpy(vet[s], monomial, n);
-			s+=1;
+			vctcpy(vet[(*pos)], monomial, n);
+			(*pos)++;
 		}
-		//otherwise recursively call itself changing the variable (turn)
+		//altrimenti richiama se stessa cambiando la variabile (turn)
 		else
-			monomial_computation(n, m, vet, turn+1, monomial);
+			monomial_computation_rec(n, m, vet, turn+1, monomial, pos);
 	}
 	
-	//before finishing the function (the first variable has finished looping)
-	//set the array index to zero so that the function can be called again
-	//because it wouldn't reset if called again since it declared static 
-	if (turn == 0)
-		s = 0;
 	return;
 }
 
 
-//copies vector vet2 into vet1 of length len
+//copia il vettore vet2 in vet1, entrambi di lunghezza len
 void vctcpy(int *vet1, const int *vet2, int len) {
 	for (int i = 0; i < len; i++)
 		vet1[i] = vet2[i];
@@ -768,7 +810,7 @@ int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *
 /*
 La funzione esegue il parse di un singolo monomio.
 In particolare si divide il monomio in:
-	- coefficiente (se esiste altrimenti = 1)
+	- coefficiente (se esiste, altrimenti = 1)
 	- vettore rappresentante i gradi delle singole variabili
 
 es. 3 variabili xyz, Monomio: 345x^2*y 
