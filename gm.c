@@ -111,16 +111,19 @@ int main (void){
 	long long **m;
 	char *v;
 	row = col = num_var = 0;
-	allocation(&m,&row,&col,&num_var,&v);  //predispone la matrice dei coefficienti
+	
+	allocation(&m,&row,&col,&num_var,&v);  //alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
 	d_row = &row;
 
 	int degree[max_degree+1];
 	len = col;
 
-	vet = monomial_computation(num_var, max_degree, len);
+	vet = monomial_computation(num_var, max_degree, len); 
+	//crea il vettore con tutti i possibili monomi avendo num_var varaibili e max_degree come massimo grado
 
 
-	qsort_r(vet, len, sizeof(int*), grevlex_comparison, &num_var);
+	qsort_r(vet, len, sizeof(int*), grevlex_comparison, &num_var); 
+	//ordina il vettore dei monomi secondo un determinato ordinamento, ordinamento intercambiabile
 
 	if( init_matrix(m,row,col,vet,v,num_var) == -1 ){ //inizializzazione matrice (lettura dati input)
 		printf("Errore di input !!!\n TERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
@@ -128,15 +131,15 @@ int main (void){
 	}
 	 
 
-	matrix_alloc_int(&map,len,len);
-	setup_map(map, vet, len, num_var, max_degree);     // a questo punto posso utilizzare la mappa
+	matrix_alloc_int(&map,len,len);                    //allocazione matrice che mappa le posizioni dei prodotti dei monomi
+	setup_map(map, vet, len, num_var, max_degree);     //creazione della mappa
 
 	//RISOLUZIONE PROBLEMA
-	init_degree_vector(degree,num_var); 
-	execute(&m,d_row,col,map,degree,vet,num_var);  //soluzione trovata
-	print_matrix(m, row, col);	 //stampa la matrice soluzione
+	init_degree_vector(degree,num_var);                //inizializzazione vettore dei gradi dei polinomi
+	execute(&m,d_row,col,map,degree,vet,num_var);      //eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
+	print_matrix(m, row, col);	                       //stampa la matrice soluzione
 
-	matrix_free_long(&m,row,col);
+	matrix_free_long(&m,row,col);					   //deallocazione di tutti i puntatori utilizzati
 	matrix_free_int(&map,len,len);
 	matrix_free_int(&vet,len,num_var);
 
