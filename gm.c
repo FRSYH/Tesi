@@ -675,28 +675,22 @@ La terminazione è data da:
 	flag = old = new = 0;
 	old = *d_row;
 	while( flag != 1 ){
+
 		printf("\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
-
 		begin = clock();	
-		
 		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);  //moltiplico la matrice per tutti i monomi possibili
 		printf("numero righe: %d", *d_row);
-		
 		end = clock();
 		time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		printf("     (%f sec)", time_spent);
 		
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
-
 		begin = clock();		
 		gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
-
 		end = clock();
 		time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
   		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 		printf("numero righe: %d", *d_row);
@@ -716,9 +710,6 @@ La terminazione è data da:
 		}
 	}
 	printf("\nFine procedura, target raggiunto\n\n");
-
-
-
 	free(m_deg);
 }
 
