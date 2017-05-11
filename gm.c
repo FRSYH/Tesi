@@ -28,7 +28,7 @@ void swap_rows(long long **m, int row, int col, int j, int i);  // scambia tra d
 
 void print_matrix (long long **m, int row, int col); // stampa la matrice
 
-int init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var); //inizializza la matrice dei coefficienti
+int init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var,int (*ord) (const void *, const void *, void*)); //inizializza la matrice dei coefficienti
 
 //moltiplica la riga indicata per tutti i possibili monomi
 void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int **vet, int num_var); 
@@ -92,7 +92,7 @@ void execute(long long ***m, int *d_row, int col, int **map, int *degree, int **
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
 
-void allocation(long long ***m, int *row, int *col, int *num_var, char **v);
+void allocation(long long ***m, int *row, int *col, int *num_var, char **v, int *n);
 
 void matrix_free_long(long long ***m, int row, int col);
 
@@ -100,21 +100,29 @@ void matrix_alloc_int(int ***m, int row, int col);
 
 void matrix_free_int(int ***m, int row, int col);
 
-int parse(int num_var, char *vet, long long **m, int **vet_grd, int len);
+int parse(int num_var, char *vet, long long **m, int **vet_grd, int len,int (*ord) (const void *, const void *, void*));
 
 int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *grade, int pos_pol);
+
+//associa ad *ord la funzione di ordinamento scelta
+void order(int (**ord) (const void *, const void *, void*), int n);  
 
 int main (void){
 	
 
-	int row, col, num_var;
+	int row, col, num_var,n;
 	int *d_row,**vet, len, **map;
 	long long **m;
 	char *v;
 	row = col = num_var = 0;
+	int (*ord) (const void *, const void *, void*);
+
+
 	
-	allocation(&m,&row,&col,&num_var,&v);  //alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
+	allocation(&m,&row,&col,&num_var,&v,&n);  //alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
 	d_row = &row;
+
+	order(&ord,n);
 
 	int degree[max_degree+1];
 	len = col;
@@ -123,17 +131,17 @@ int main (void){
 	//crea il vettore con tutti i possibili monomi avendo num_var varaibili e max_degree come massimo grado
 
 
-	qsort_r(vet, len, sizeof(int*), grevlex_comparison, &num_var); 
+	qsort_r(vet, len, sizeof(int*), ord, &num_var); 
 	//ordina il vettore dei monomi secondo un determinato ordinamento, ordinamento intercambiabile
 
-	if( init_matrix(m,row,col,vet,v,num_var) == -1 ){ //inizializzazione matrice (lettura dati input)
+	if( init_matrix(m,row,col,vet,v,num_var,ord) == -1 ){ //inizializzazione matrice (lettura dati input)
 		printf("Errore di input !!!\n TERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
 		return 0;
 	}
 	 
 
 	matrix_alloc_int(&map,len,len);                    //allocazione matrice che mappa le posizioni dei prodotti dei monomi
-	setup_map(map, vet, len, num_var, max_degree,grevlex_comparison);     //creazione della mappa
+	setup_map(map, vet, len, num_var, max_degree,ord);     //creazione della mappa
 
 	//RISOLUZIONE PROBLEMA
 	init_degree_vector(degree,num_var);                //inizializzazione vettore dei gradi dei polinomi
@@ -273,9 +281,9 @@ void print_matrix (long long **m, int row, int col){
 }
 
 
-int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var){
+int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var, int (*ord) (const void *, const void *, void*) ){
 //Inizializza la matrice principale (dei coefficienti) con i coefficienti dei polinomi forniti come input.
-	return parse(num_var,v,m,vet_grd,col);
+	return parse(num_var,v,m,vet_grd,col,ord);
 }
 
 
@@ -703,13 +711,15 @@ int target_degree(int *v){
 }
 
 
-void allocation(long long ***m, int *row, int *col, int *num_var, char **v){
+void allocation(long long ***m, int *row, int *col, int *num_var, char **v, int *n){
 /*
 Legge da input le seguenti informazioni:
 	- modulo dei coefficienti
 	- grado massimo
 	- numero dei polinomi di partenza
+	- tipo di ordinamento
 	- variabili utilizzate nei polinomi
+
 
 con queste informazioni alloca la matrice principale (matrice che conterrà i polinomi) e stabilisce il numero di variabili utilizzate.
 */
@@ -718,6 +728,8 @@ con queste informazioni alloca la matrice principale (matrice che conterrà i po
 	scanf("%d",&max_degree); //leggo il grado massimo
 	getchar();
 	scanf("%d",row);  //leggo numero dei polinomi di partenza
+	getchar();
+	scanf("%d",n);  //leggo tipo di ordinamento
 	getchar();
 
 	int i,j,k,pos_pol,num_pol;
@@ -767,7 +779,7 @@ void matrix_free_int(int ***m, int row, int col){
 	free(*m);	
 }
 
-int parse(int num_var, char *vet, long long **m, int **vet_grd, int len){
+int parse(int num_var, char *vet, long long **m, int **vet_grd, int len, int (*ord) (const void *, const void *, void*) ){
 /*
 Esegue la lettura (parse) dei polinomi di partenza nel seguente modo.
 Si legge un monomio alla volta. 
@@ -801,7 +813,7 @@ In caso di errore di formato nell'input la funzione si interrompe restituendo se
 				return -1;
 			}
 			//inserire monomio in posizione corretta
-			col = (int **)(bsearch_r((void *) &grade, (void *) vet_grd, len, (sizeof(int*)), grevlex_comparison, &num_var)) - vet_grd;
+			col = (int **)(bsearch_r((void *) &grade, (void *) vet_grd, len, (sizeof(int*)), ord, &num_var)) - vet_grd;
 			m[pos_pol][col] = cof;
 			if(c=='\n'){
 				pos_pol++;
@@ -899,4 +911,20 @@ se una variabile non compare nel monomio allora grado = 0
 	}
 	free(exp);
 	free(cof);
+}
+
+
+void order(int (**ord) (const void *, const void *, void*), int n){
+//inizializza il puntatore ord alla funzione di ordinamento adeguata. Il numero n indica quale funzione scegliere.
+
+	switch(n){
+
+		case 0:
+			*ord = grevlex_comparison;
+			break;
+
+		default:
+			break;	
+
+	}
 }

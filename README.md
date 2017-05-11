@@ -51,6 +51,7 @@ Per eseguire il programma occorre fornire i dati di input (esempio di file di in
 - modulo dei coefficienti
 - grado massimo raggiungibile
 - numero polinomi di partenza
+- tipo di ordinamento  <-- NEW!!!
 - elenco delle variabili utilizzate nei polinomi (su una sola riga in ordine alfabetico)
 - elenco di polinomi (uno per riga, con il formato utilizzato da Magma, esempio nel file)
 >./gm < input.txt > output.txt
@@ -61,3 +62,9 @@ N.B. se l'input è in un formato scorretto il programma abortirà la computazion
 N.B.2 il parser che si occupa della lettura dell'input non è ancora testato in modo ottimale, si consiglia sempre di confrontare il risultato fornito con quello di Magma.
 
 Il parser risulta comodo per inserire i dati, tuttavia il tempo impiegato per questa operazione non è da sottovalutare.
+
+ORDINAMENTO POLINOMI
+L'ordinamento dei polinomi è ora parametrico, ed è possibile scegliere in fase di input quale utilizzare inserendo l'apposito codice.
+
+ordinamenti implementati e relativi codici di input:
+- grevlex_comparison -> 0
