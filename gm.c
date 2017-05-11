@@ -105,7 +105,7 @@ int parse(int num_var, char *vet, long long **m, int **vet_grd, int len,int (*or
 int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *grade, int pos_pol);
 
 //associa ad *ord la funzione di ordinamento scelta
-void order(int (**ord) (const void *, const void *, void*), int n);  
+int order(int (**ord) (const void *, const void *, void*), int n);  
 
 int main (void){
 	
@@ -122,7 +122,11 @@ int main (void){
 	allocation(&m,&row,&col,&num_var,&v,&n);  //alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
 	d_row = &row;
 
-	order(&ord,n);
+	if( order(&ord,n) != 0 ){
+		printf("Ordinamento insesistente!!!\n\nTERMINAZIONE PROGRAMMA");
+		return 0;
+	}
+
 
 	int degree[max_degree+1];
 	len = col;
@@ -135,7 +139,7 @@ int main (void){
 	//ordina il vettore dei monomi secondo un determinato ordinamento, ordinamento intercambiabile
 
 	if( init_matrix(m,row,col,vet,v,num_var,ord) == -1 ){ //inizializzazione matrice (lettura dati input)
-		printf("Errore di input !!!\n TERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
+		printf("Errore di input !!!\n\nTERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
 		return 0;
 	}
 	 
@@ -914,16 +918,18 @@ se una variabile non compare nel monomio allora grado = 0
 }
 
 
-void order(int (**ord) (const void *, const void *, void*), int n){
+int order(int (**ord) (const void *, const void *, void*), int n){
 //inizializza il puntatore ord alla funzione di ordinamento adeguata. Il numero n indica quale funzione scegliere.
 
 	switch(n){
 
 		case 0:
 			*ord = grevlex_comparison;
+			return 0;
 			break;
 
 		default:
+			return -1;
 			break;	
 
 	}
