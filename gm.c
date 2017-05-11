@@ -152,7 +152,7 @@ int main (void){
 //Riduzione di n in modulo p.
 long long mod(long long n, long long p){
 	long long v = n,x =0;
-	if( v >= p ){
+	/*if( v >= p ){
 		x = n/p;
 		v = n-(x*p);
 	}else{
@@ -161,7 +161,16 @@ long long mod(long long n, long long p){
 			v = n-(x*p);
 			v += p;
 		}
-	}	
+	}*/
+	if( v >= p ){
+		v = n%p;
+	}else{
+		if( v < 0 ){
+			x = n/p;
+			v = n-(x*p);
+			v += p;
+		}
+	}
 	return v;
 }
 
@@ -230,6 +239,7 @@ void riduzione(long long **m, int row, int col, int riga_pivot, int j){
 			for( k=0; k<col; k++ ){
 				a = mul_mod(s,m[riga_pivot][k],module);
 				m[r][k] = sub_mod(m[r][k],a,module);
+
 			}
 			
 		}
