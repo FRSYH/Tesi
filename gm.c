@@ -41,30 +41,31 @@ int grado_monomio(int posizione, int **vet, int num_var);
 
 int combination(int n, int k);
 
-//returns the number of all possible monomial with n variables and degree <= m
+//restituisce il numero di tutti i possibili monomi con n variabili e grado <=m
 int monomial_combinations(int n, int m); 
 
 //restituisce un array contenente tutti i len monomi con n variabili e grado <= m
 //len è il numero di possibili monomi con n variabili e grado <= m
 int **monomial_computation(int n, int m, int len);
 
-//computes all possible monomials with n variables and degree <= m
-//saves them into array vet, see the definition for more informations
+//funzione ricorsiva che calcola tutti i possibili monomi con n variabili e grado <= m
+//e li inserisce nell'array vet. Chiamata da monomial_computation
 void monomial_computation_rec(int n, int m,  int **vet, int turn, int *monomial, int *pos);
 
-//copies vector vet2 into vet1 of length len
+//copia il vettore vet2 in vet1, entrambi di lunghezza len
 void vctcpy(int *vet1, int const *vet2, int len);
 
-//compares two monomials of *(arg) variables following the grevlex order
-//returns a positive number if mon1 > mon2, 0 if they are equal, negative otherwise
+//confronta due monomi di *arg variabili secondo l'ordinamento grevlex
+//restituisce un intero positivo se monom1 > monom2, zero se sono uguali, uno negativo altrimenti
 int grevlex_comparison(const void *mon1, const void *mon2, void *arg);
 
-//maps all the possible multiplications of the monomials of n variables in the array
-//vet of length len into the matrix map[len][len]
-void setup_map(int **map, int **vet, int len, int n, int m);
+//mappa tutte le possibili moltiplicazioni dei monomi di n variabili e grado <= m
+//dell'array vet di lunghezza len, nella matrice map[len][len]. compar è la funzione
+//secondo cui vet è ordinato.
+void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const void *, const void *, void*));
 
 
-//missing in stdlib, counterpart of qsort_r
+//mancante nella stdlib, controparte di qsort_r
 void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
                  int (*compar) (const void *, const void *, void *),
                  void *arg);
@@ -132,7 +133,7 @@ int main (void){
 	 
 
 	matrix_alloc_int(&map,len,len);                    //allocazione matrice che mappa le posizioni dei prodotti dei monomi
-	setup_map(map, vet, len, num_var, max_degree);     //creazione della mappa
+	setup_map(map, vet, len, num_var, max_degree,grevlex_comparison);     //creazione della mappa
 
 	//RISOLUZIONE PROBLEMA
 	init_degree_vector(degree,num_var);                //inizializzazione vettore dei gradi dei polinomi
@@ -268,12 +269,13 @@ int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num
 }
 
 
-//returns the number of all possible monomial with n variables and degree <= m
+//restituisce il numero di tutti i possibili monomi con n variabili e grado <= m
 int monomial_combinations(int n, int m) {
 
+	// dichiarato double per compatibilità con il fattoriale della libreria gsl
 	double result = 0., num, den;
-	// result = Summation (j = 1 -> m) {(j+n-1)! / j!*(n-1)!}
-	// simplified to Summation (j = 1 -> m) {(j+n-1)*(j+n-2)* ... *(n) / j!}
+	// result = Sommatoria (per j da 1 a m) {(j+n-1)! / j!*(n-1)!}
+	// semplificato a: Sommatoria (per j da 1 a m) {(j+n-1)*(j+n-2)* ... *(n) / j!}
 	for (int j = 1; j <= m; j++) {
 		num = 1.;
 		for (int k = j; k > 0 ; k--)
@@ -371,11 +373,11 @@ dell'array vet di lunghezza len, nella matrice map[len][len].
 Al termine map[x][y] contiene la posizione all'interno di vet del
 monomio risultato dal prodotto di vet[x]*vet[y]
 Esempio: vet[4] * vet[10] = vet [map[4][10]] 
-se il grado del prodotto supera m viene messo il valore -1 nella matrice
+se il grado del prodotto supera m viene messo il valore -1 nella matrice.
+compar è la funzione secondo cui vet è ordinato,
 la matrice map deve essere già correttamente allocata
-l'arrey vet deve essere ordinato secondo grevlex
 */
-void setup_map(int **map, int **vet, int len, int n, int m) {
+void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const void *, const void *, void*)) {
 
 	int sum, *temp = malloc(n * sizeof(int));
 	
@@ -398,11 +400,10 @@ void setup_map(int **map, int **vet, int len, int n, int m) {
 			}
 			//altrimenti cerco il prodotto in vet e metto l'indice in map
 			else
-				map[row][col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), grevlex_comparison, &n)) - vet;
+				map[row][col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), compar, &n)) - vet;
 		}
 	free(temp);
 }
-
 
 //https://git.devuan.org/jaretcantu/eudev/commit/a9e12476ed32256690eb801099c41526834b6390
 //mancante nella stdlib, controparte di qsort_r
