@@ -5,7 +5,7 @@
 #include <string.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <ctype.h>
-
+#include <time.h>
 
 int max_degree = 0;
 long long module = 0;
@@ -108,6 +108,7 @@ int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *
 int order(int (**ord) (const void *, const void *, void*), int n);  
 
 int main (void){
+	
 	
 
 	int row, col, num_var,n;
@@ -662,6 +663,10 @@ La terminazione è data da:
 	- iterazione infinita, non c'è soluzione con gradi completi
 
 */
+
+	clock_t begin,end;
+	double time_spent;
+
 	int *m_deg = calloc(max_degree+1, sizeof(int));
 	printf("Inizio procedura\n");
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
@@ -672,14 +677,30 @@ La terminazione è data da:
 	while( flag != 1 ){
 		printf("\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
+
+		begin = clock();	
+		
 		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);  //moltiplico la matrice per tutti i monomi possibili
 		printf("numero righe: %d", *d_row);
+		
+		end = clock();
+		time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+		printf("     (%f sec)", time_spent);
+		
 		printf("\n -Eseguo Gauss, ");
-		fflush(stdout);	
+		fflush(stdout);
+
+		begin = clock();		
 		gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
+
+		end = clock();
+		time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
   		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
-		printf("numero righe: %d\n", *d_row);
+		printf("numero righe: %d", *d_row);
+		printf("               (%f sec)\n", time_spent);
 		print_matrix_degree(m_deg);
 
 		new = *d_row;
@@ -695,6 +716,9 @@ La terminazione è data da:
 		}
 	}
 	printf("\nFine procedura, target raggiunto\n\n");
+
+
+
 	free(m_deg);
 }
 

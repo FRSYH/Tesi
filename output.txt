@@ -1,15 +1,15 @@
 Inizio procedura
 
- -Eseguo moltiplicazione, numero righe: 95
- -Eseguo Gauss, numero righe: 92
+ -Eseguo moltiplicazione, numero righe: 95     (0.000036 sec)
+ -Eseguo Gauss, numero righe: 92               (0.000744 sec)
 Gradi della matrice = { 3  4  5  6  7 }
 
- -Eseguo moltiplicazione, numero righe: 513
- -Eseguo Gauss, numero righe: 110
+ -Eseguo moltiplicazione, numero righe: 513     (0.000205 sec)
+ -Eseguo Gauss, numero righe: 110               (0.014767 sec)
 Gradi della matrice = { 3  4  5  6  7 }
 
- -Eseguo moltiplicazione, numero righe: 1008
- -Eseguo Gauss, numero righe: 119
+ -Eseguo moltiplicazione, numero righe: 1008     (0.000393 sec)
+ -Eseguo Gauss, numero righe: 119               (0.076127 sec)
 Gradi della matrice = { 1  2  3  4  5  6  7 }
 
 Fine procedura, target raggiunto
