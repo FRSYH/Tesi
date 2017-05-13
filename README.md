@@ -42,8 +42,8 @@ ISTRUZIONI PER COMPILAZIONE ED ESECUZIONE PROGRAMMA
 Tutto il programma è contenuto nel file gm.c 
 Il programma deve essere eseguito su sistemi Unix (su windows manca una metodo delle librerie standard di C).
 
-Per compilare il programma è necessario aver installato le librerie GSL.
->gcc gm.c -lgsl -lgslcblas -lm -o gm
+Per compilare il programma. NEW!!! rimosso fattoriale gsl, non servono più le librerie
+>gcc gm.c -o gm
 
 Il programma necessita di dati di input, per comodità si consiglia di utilizzare un file di input.
 
