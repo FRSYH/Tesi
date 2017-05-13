@@ -1,9 +1,7 @@
 #define _GNU_SOURCE 
 #include <stdio.h>
-#include <gsl/gsl_linalg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <gsl/gsl_sf_gamma.h>
 #include <ctype.h>
 #include <time.h>
 
@@ -106,6 +104,9 @@ int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *
 
 //associa ad *ord la funzione di ordinamento scelta
 int order(int (**ord) (const void *, const void *, void*), int n);  
+
+//calcola il fattoriale di n
+int factorial(int n);
 
 int main (void){
 	
@@ -296,17 +297,17 @@ int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num
 int monomial_combinations(int n, int m) {
 
 	// dichiarato double per compatibilità con il fattoriale della libreria gsl
-	double result = 0., num, den;
+	int result = 0, num, den;
 	// result = Sommatoria (per j da 1 a m) {(j+n-1)! / j!*(n-1)!}
 	// semplificato a: Sommatoria (per j da 1 a m) {(j+n-1)*(j+n-2)* ... *(n) / j!}
 	for (int j = 1; j <= m; j++) {
-		num = 1.;
+		num = 1;
 		for (int k = j; k > 0 ; k--)
 			num = num * (n+k-1);
-		den = gsl_sf_fact (j);
+		den = factorial(j);
 		result += (num / den);
 	}
-	return (int) result;
+	return  result;
 }
 
 
@@ -384,9 +385,9 @@ void init_degree_vector(int * degree, int num_var){
 
 int combination(int n, int k){
 	int a,b,c;
-	a = gsl_sf_fact(n+k-1);
-	b = gsl_sf_fact(k);
-	c = gsl_sf_fact((n+k-1)-k);
+	a = factorial(n+k-1);
+	b = factorial(k);
+	c = factorial((n+k-1)-k);
 	return  a/(c*b);
 }
 
@@ -867,40 +868,40 @@ se una variabile non compare nel monomio allora grado = 0
 	exp = malloc( sizeof(char) );
 	i = 0;
 	pos_var = 0;
-	if( isdigit(mon[i]) != 0 ){  // se c è un numero
+	if( isdigit(mon[i]) != 0 ){  // se il primo carattere letto è un numero
 		i = 0;
-		while( isdigit(mon[i]) && i<len){
+		while( isdigit(mon[i]) && i<len){ //procedo alla lettura del coefficiente
 			cof = realloc(cof, (i+1) * sizeof(char));
 			cof[i] = mon[i];
 			i++;                   
 		}
-		*val = mod(atoll(cof),module);
+		*val = mod(atoll(cof),module);  //a questo punto ho letto il coefficiente e lo riduco in modulo se necessario
 
-		//printf("val: %lli\n", *val);
-	}else{
+		
+	}else{ // altrimenti se il primo carattere letto non è un numero ma una lettera
 		if( isalpha(mon[i]) != 0 ){
-			*val = 1;
-			//printf("val: %lli\n", *val);
-		}else{
-			//errore
-			return -1;
+			*val = 1;   // significa che il coefficiente del monomio è 1
+			
+		}else{ 
+			// se il primo carattere non è ne un numero ne una lettera allora è un carattere non valido -> ERRORE
+			return -1;  //terminazione parse con codice di errore -1
 		}	
 	}
-	if( i < len ){
+	if( i < len ){   
 		while( i < len ){
 			if( mon[i] == '*' ){ 
 				i++;    
 			}
-			if( i<len && (isalpha(mon[i]) != 0) ){
+			if( i<len && (isalpha(mon[i]) != 0) ){  //cerco le variabili presenti
 				for(k=0; k<num_var; k++){
 					if( vet[k] == mon[i] ){
 						pos_var = k;
-						break;
+						break;			//quando trovo una variabile salvo la sua posizione e interrompo
 					}
 				}
 				i++;
-				if( i<len ){
-					if( mon[i] == '^' ){ //ho trovato il grado della variabile
+				if( i<len ){  //controllo se la variabile ha un grado
+					if( mon[i] == '^' ){ //se trovo il carattere di elevamento a potenza allora c'è un grado
 						i++;
 						if( isdigit(mon[i]) != 0 ){
 							k = 0;
@@ -910,19 +911,20 @@ se una variabile non compare nel monomio allora grado = 0
 								i++;
 								k++;
 							}
-						grade[pos_var] = atoi(exp);
+						grade[pos_var] = atoi(exp); //leggo il grado della variabile e lo salvo nel 
+													//vettore che rappresenta tutte le possibili variabili nella posizione adeguata
 						}else{
-							//errore
+							// se il carattere successivo al carattere di elevamento a potenza non è un numero allora errore di input
 							return -1;									
 						}
-					}else{
+					}else{  // se non esiste il simbolo di elevamento a potenza allora significa che il grado della variabile è 1
 						grade[pos_var] = 1;	
 					}
-				}else{
+				}else{ // se termino il monomio con una variabile senza grado allora il suo grado è 1
 					grade[pos_var] = 1;
 				}								
 			}else{
-				//errore
+				// se dopo il simbolo * non trovo un carattere alfabetico che indica una variabile errore di input
 				return -1;				
 			}
 			i++;
@@ -947,5 +949,26 @@ int order(int (**ord) (const void *, const void *, void*), int n){
 			return -1;
 			break;	
 
+	}
+}
+
+//calcola il fattoriale di n (se n è negativo return -1)
+int factorial(int n){
+	int k;
+
+	if (n<0) //se n è negativo non esiste il fattoriale
+	{
+		return -1; //codice di errore
+	}else{ //altrimenti calcolo il fattoriale
+
+		if( n==0 || n==1 ){
+			return 1;
+		}else{
+			k=1;
+			for (int i = 2; i <= n; i++){
+				k *= i;	
+			}
+			return k;
+		}
 	}
 }
