@@ -246,10 +246,12 @@ void riduzione(long long **m, int row, int col, int riga_pivot, int j){
 	
 	int r,k;
 	long long s,inv,a;
+	#pragma omp parallel for private(inv,s,k,a) shared (r,m)
 	for( r=riga_pivot+1; r<row; r++ ){
 		if( m[r][j] != 0 ){
 			inv = invers(m[riga_pivot][j],module);			//calcola l'inverso moltiplicativo di m[riga_pivot][j] nel campo indicato
 			s = mul_mod(inv,m[r][j],module);
+			//#pragma omp parallel for private(a)
 			for( k=0; k<col; k++ ){
 				a = mul_mod(s,m[riga_pivot][k],module);
 				m[r][k] = sub_mod(m[r][k],a,module);
@@ -265,6 +267,7 @@ void swap_rows(long long **m, int row, int col, int j, int i){
 	
 	int k;
 	long long tmp;
+	
 	for(k=0;k<col;k++){
 		tmp = m[i][k];
 		m[i][k] = m[j][k];
@@ -350,10 +353,13 @@ void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int
 
 		for (i=(*row); i< (*row + new_row ); i++)
 			(*m)[i] = calloc(col , sizeof (long long) );
-
+			
+		
 		for(i=1; i<(new_row+1); i++){     								//scorre tutti i monomi per i quali posso moltiplicare
-			for(j=0; j<(last+1); j++)     								//scorre fino all'ultimo elemento della riga
+			//#pragma omp parallel for 	
+			for(j=0; j<(last+1); j++){     								//scorre fino all'ultimo elemento della riga
 				(*m)[*row][ map[i][j] ] = (*m)[riga][j];  				//shift nella posizione corretta indicata dalla mappa
+			}	
 			*row = *row + 1;											//aumento del conteggio delle righe
 		}
 	}
@@ -406,6 +412,7 @@ void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const
 	int sum, *temp = malloc(n * sizeof(int));
 	
 	//per ogni monomio in vet
+	
 	for (int row = 0; row < len; row++)
 		//provo a moltiplicarlo con ogni monomio in vet
 		for (int col = 0; col < len; col++) {
