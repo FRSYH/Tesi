@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <omp.h>
 
 int max_degree = 0;
 long long module = 0;
@@ -110,7 +111,7 @@ int factorial(int n);
 
 int main (void){
 	
-	
+	double start = omp_get_wtime(),start_map,prec = omp_get_wtime();
 
 	int row, col, num_var,n;
 	int *d_row,**vet, len, **map;
@@ -144,19 +145,25 @@ int main (void){
 		printf("Errore di input !!!\n\nTERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
 		return 0;
 	}
-	 
 
+	printf("\nInizializzazione in %f sec\n",omp_get_wtime()-prec); 
+	start_map = omp_get_wtime();
 	matrix_alloc_int(&map,len,len);                    //allocazione matrice che mappa le posizioni dei prodotti dei monomi
 	setup_map(map, vet, len, num_var, max_degree,ord);     //creazione della mappa
+	printf("\nMappa creata in %f sec\n\n",omp_get_wtime()-start_map);	
 
 	//RISOLUZIONE PROBLEMA
 	init_degree_vector(degree,num_var);                //inizializzazione vettore dei gradi dei polinomi
 	execute(&m,d_row,col,map,degree,vet,num_var);      //eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
+
+	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start);
 	print_matrix(m, row, col);	                       //stampa la matrice soluzione
+
 
 	matrix_free_long(&m,row,col);					   //deallocazione di tutti i puntatori utilizzati
 	matrix_free_int(&map,len,len);
 	matrix_free_int(&vet,len,num_var);
+
 
 	return 0;
 }
@@ -166,16 +173,7 @@ int main (void){
 //Riduzione di n in modulo p.
 long long mod(long long n, long long p){
 	long long v = n,x =0;
-	/*if( v >= p ){
-		x = n/p;
-		v = n-(x*p);
-	}else{
-		if( v < 0 ){
-			x = n/p;
-			v = n-(x*p);
-			v += p;
-		}
-	}*/
+
 	if( v >= p ){
 		v = n%p;
 	}else{
@@ -267,7 +265,7 @@ void swap_rows(long long **m, int row, int col, int j, int i){
 	
 	int k;
 	long long tmp;
-	
+	#pragma omp parallel for private (tmp) shared (m)
 	for(k=0;k<col;k++){
 		tmp = m[i][k];
 		m[i][k] = m[j][k];
@@ -356,7 +354,7 @@ void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int
 			
 		
 		for(i=1; i<(new_row+1); i++){     								//scorre tutti i monomi per i quali posso moltiplicare
-			//#pragma omp parallel for 	
+			//#pragma omp parallel for shared (m,row,riga)	
 			for(j=0; j<(last+1); j++){     								//scorre fino all'ultimo elemento della riga
 				(*m)[*row][ map[i][j] ] = (*m)[riga][j];  				//shift nella posizione corretta indicata dalla mappa
 			}	
@@ -425,6 +423,7 @@ void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const
 			//se il grado del prodotto > grado massimo tutti i restanti prodotti
 			//su quella riga sono > grado massimo, setto a -1 il resto della riga
 			if (sum > m) {
+
 				for (int i = col; i < len; i++)
 					map[row][i] = -1;
 				break;	
@@ -672,11 +671,11 @@ La terminazione è data da:
 
 */
 
-	clock_t begin,end;
-	double time_spent;
-
+	
+	
+	double start;
 	int *m_deg = calloc(max_degree+1, sizeof(int));
-	printf("Inizio procedura\n");
+	printf("Inizio computazione\n");
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
 	int flag,old,new;
@@ -686,23 +685,23 @@ La terminazione è data da:
 
 		printf("\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
-		begin = clock();	
+		start = omp_get_wtime();	
 		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);  //moltiplico la matrice per tutti i monomi possibili
-		printf("numero righe: %d", *d_row);
-		end = clock();
+		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-start);
+
+
+
+/*		end = clock();
 		time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-		printf("     (%f sec)", time_spent);
+		printf("     (%f sec)", time_spent);  */
 		
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
-		begin = clock();		
+		start = omp_get_wtime();	
 		gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
-		end = clock();
-		time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
+		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-start);
   		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
-		printf("numero righe: %d", *d_row);
-		printf("               (%f sec)\n", time_spent);
 		print_matrix_degree(m_deg);
 
 		new = *d_row;
@@ -717,7 +716,7 @@ La terminazione è data da:
 			}			
 		}
 	}
-	printf("\nFine procedura, target raggiunto\n\n");
+
 	free(m_deg);
 }
 
