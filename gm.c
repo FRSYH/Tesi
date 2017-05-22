@@ -162,10 +162,10 @@ int main (void){
 
 	//RISOLUZIONE PROBLEMA
 	init_degree_vector(degree,num_var);                //inizializzazione vettore dei gradi dei polinomi
-	execute(&m,d_row,col,map,degree,vet,num_var);      //eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
+	test(&m,d_row,col,map,degree,vet,num_var);      //eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 
 	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start);
-	print_matrix(m, row, col);	                       //stampa la matrice soluzione
+	//print_matrix(m, row, col);	                       //stampa la matrice soluzione
 
 
 	matrix_free_long(&m,row,col);					   //deallocazione di tutti i puntatori utilizzati
@@ -665,8 +665,10 @@ void eliminate_null_rows(long long ***m, int *row, int col){
 //Se non si esegue questa funzione dopo Gauss si possono eliminare righe non nulle.	
 
 	int null_row = null_rows(*m,*row,col);
-	*m = realloc( *m , (*row - null_row ) * sizeof (long long *));
-	*row = *row - null_row;
+	if(null_row != 0){
+		*m = realloc( *m , (*row - null_row ) * sizeof (long long *));
+		*row = *row - null_row;
+	}
 }
 
 
@@ -1031,6 +1033,17 @@ void add_row_to_matrix(long long ***m, int *row, int col, long long *r){
 
 }
 
+void print_array(long long *v, int len){
+	for(int i=0; i< len; i++){
+		printf("%lli ",v[i]);
+	}
+	printf("\n\n");
+}
+
+
+void array_copy(long long *v1, long long *v2, int len){
+	for(int i=0; i<len; i++) v2[i] = v1[i];
+}
 
 void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet, int num_var){
 	
@@ -1085,29 +1098,53 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 		print_matrix_degree(m_deg);
 
 		new = *d_row;
-			//print_matrix(*m,*d_row,col);		
+
+		
+	    //print_matrix(*m,*d_row,col);		
 		
 		//cerco le linee indipendenti
 		printf("\n\nRICERCA RIGHE INDIPENDENTI\n\n");
 		
+		 long long v[120]={};		 
+
+			*d_row = s_row;
+			col = s_col;	
 		 
-		
-		
-		
-			i=0;
+		 for(i=0; i<new; i++){
+		 	array_copy( (*m)[i] ,v,col );
+//		 	print_array( v ,col);
+		 	add_row_to_matrix(&m3,d_row,col,v);
+			printf("\n -Eseguo Gauss su 4 righe partenza + %d° riga primo passo , ottengo -> ",i+1);		 	
+			fflush(stdout);
+			start = omp_get_wtime();			
+		 	gauss(*m, *d_row, col); 
+		 	eliminate_null_rows(m,d_row,col);
+		 	printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-start);		 
+			matrix_realloc_long(&m3,*d_row,col,s_row,s_col);
+			*d_row = s_row;
+			col = s_col;
+			matrix_cpy(m2,*d_row,col,m3);
+		 }
+		 
+
+/*
+
+	
 			*d_row = s_row;
 			col = s_col;			
-		for(i=0;i<0;i++){
-			add_row_to_matrix(&m3,d_row,col,(*m)[i]);   //aggiungo la prima riga di m a m3
+//		for(i=0;i<new;i++){
 			
-			//printf("\nNuovo caso *d_row %d col %d\n",*d_row,col);
-			//print_matrix(m3,*d_row,col);
+
+			add_row_to_matrix(&m3,d_row,col,(*m)[i]);   //aggiungo la prima riga di m a m3
+
+
 			printf("\n -Eseguo Gauss su 4 righe partenza + %d° riga primo passo , ottengo -> ",i+1);
 
 			fflush(stdout);
 			start = omp_get_wtime();
 			
-			gauss(m3, *d_row, col); 	
+
+			print_matrix(m3,*d_row,col);
 			eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
 			printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-start);
 
@@ -1118,30 +1155,9 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 		
 
 			
-		}
+		//}
 
-		for(i=5;i<new;i++){
-			add_row_to_matrix(&m3,d_row,col,(*m)[i]);   //aggiungo la prima riga di m a m3
-			
-			//printf("\nNuovo caso *d_row %d col %d\n",*d_row,col);
-			//print_matrix(m3,*d_row,col);
-			printf("\n -Eseguo Gauss su 4 righe partenza + %d° riga primo passo , ottengo -> ",i+1);
 
-			fflush(stdout);
-			start = omp_get_wtime();
-			
-			gauss(m3, *d_row, col); 	
-			eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
-			printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-start);
-
-			matrix_realloc_long(&m3,*d_row,col,s_row,s_col);
-			*d_row = s_row;
-			col = s_col;
-			matrix_cpy(m2,*d_row,col,m3);
-		
-
-			
-		}
 
 
 /*		if( old == new  ){ //se per due volte trovo una matrice con le stesso numero di righe mi fermo
