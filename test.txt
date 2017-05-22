@@ -1,0 +1,19 @@
+
+Inizializzazione in 0.000099 sec
+
+Mappa creata in 0.000696 sec
+
+Inizio computazione
+
+ -Eseguo Gauss, numero righe: 4               (0.000005 sec)
+Gradi della matrice = { 3  4 }
+
+ -Eseguo moltiplicazione, numero righe: 95     (0.000049 sec)
+ -Eseguo Gauss, numero righe: 92               (0.000991 sec)
+Gradi della matrice = { 3  4  5  6  7 }
+
+
+RICERCA RIGHE INDIPENDENTI
+
+
+ -Eseguo Gauss su 4 righe partenza + 5° riga primo passo , ottengo -> 
