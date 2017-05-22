@@ -109,6 +109,12 @@ int order(int (**ord) (const void *, const void *, void*), int n);
 //calcola il fattoriale di n
 int factorial(int n);
 
+void matrix_cpy(long long **m1, int row, int col, long long **m2);
+
+void matrix_alloc_long(long long ***m, int row, int col);
+
+void add_row_to_matrix(long long ***m, int *row, int col, long long *r);
+
 int main (void){
 	
 	double start = omp_get_wtime(),start_map,prec = omp_get_wtime();
@@ -978,3 +984,42 @@ int factorial(int n){
 		}
 	}
 }
+
+
+
+//copia la matrice m1 nella matrice m2
+void matrix_cpy(long long **m1, int row, int col, long long **m2){
+	
+	int i,j;
+	for(i=0;i<row;i++){
+		for(j=0;j<col;j++){
+			m2[i][j] = m1[i][j];
+		}
+	}
+
+}
+
+
+void matrix_alloc_long(long long ***m, int row, int col){
+//Allocazione di una matrice di tipo int con dimensioni indicate.	
+	*m = malloc(row * sizeof (long long *) );
+	if( *m != NULL )
+		for (int i=0; i<row; i++)
+			(*m)[i] = calloc(col , sizeof (long) );	
+}
+
+
+
+//aggiunge la riga r alla matrice m, r deve avere linghezza uguale al numero delle colonne di m
+void add_row_to_matrix(long long ***m, int *row, int col, long long *r){
+	
+	int i;
+	*m = realloc( *m , (*row) * sizeof (long long *));
+	(*m)[*row] = calloc(col , sizeof (long long) );
+	for(i=0; i<col; i++){
+		(*m)[*row][i] = r[i];
+	}
+	*row = *row + 1;	
+
+}
+

@@ -1,23 +1,23 @@
 
-Inizializzazione in 0.000069 sec
+Inizializzazione in 0.000101 sec
 
-Mappa creata in 0.000553 sec
+Mappa creata in 0.000773 sec
 
 Inizio computazione
 
- -Eseguo moltiplicazione, numero righe: 95     (0.000035 sec)
- -Eseguo Gauss, numero righe: 92               (0.033231 sec)
+ -Eseguo moltiplicazione, numero righe: 95     (0.000073 sec)
+ -Eseguo Gauss, numero righe: 92               (0.001228 sec)
 Gradi della matrice = { 3  4  5  6  7 }
 
- -Eseguo moltiplicazione, numero righe: 513     (0.000227 sec)
- -Eseguo Gauss, numero righe: 110               (0.010090 sec)
+ -Eseguo moltiplicazione, numero righe: 513     (0.000357 sec)
+ -Eseguo Gauss, numero righe: 110               (0.014333 sec)
 Gradi della matrice = { 3  4  5  6  7 }
 
- -Eseguo moltiplicazione, numero righe: 1008     (0.000404 sec)
- -Eseguo Gauss, numero righe: 119               (0.030574 sec)
+ -Eseguo moltiplicazione, numero righe: 1008     (0.000701 sec)
+ -Eseguo Gauss, numero righe: 119               (0.073002 sec)
 Gradi della matrice = { 1  2  3  4  5  6  7 }
 
-Target raggiunto, soluzione trovata in 0.075718 sec
+Target raggiunto, soluzione trovata in 0.090728 sec
 
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 131 0 0 0 0 0 0 0 0 0 0 0 0 0 0 104 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 64 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 413 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
 
