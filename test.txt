@@ -1,204 +1,23 @@
 
-Inizializzazione in 0.000118 sec
+Inizializzazione in 0.000071 sec
 
-Mappa creata in 0.000690 sec
+Mappa creata in 0.000553 sec
 
 Inizio computazione
 
- -Eseguo Gauss, numero righe: 4               (0.000016 sec)
+ -Eseguo Gauss, numero righe: 4               (0.000005 sec)
 Gradi della matrice = { 3  4 }
 
- -Eseguo moltiplicazione, numero righe: 95     (0.000047 sec)
- -Eseguo Gauss, numero righe: 92               (0.000980 sec)
-Gradi della matrice = { 3  4  5  6  7 }
+ -Eseguo moltiplicazione, numero righe: 95     (0.000035 sec)
+ -Eseguo Gauss, numero righe: 92               (0.000766 sec)
 
 
 RICERCA RIGHE INDIPENDENTI
+RICERCA RIGHE INDIPENDENTI completata con successo
 
+righe indipendenti trovate; 88
+RICOMPOSIZIONE
 
- -Eseguo Gauss su 4 righe partenza + 1° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
 
- -Eseguo Gauss su 4 righe partenza + 2° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 3° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 4° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 5° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 6° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 7° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 8° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 9° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 10° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 11° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 12° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 13° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 14° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 15° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 16° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 17° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 18° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 19° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 20° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 21° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 22° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 23° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 24° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 25° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 26° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 27° riga primo passo , ottengo -> numero righe: 5               (0.000013 sec)
-
- -Eseguo Gauss su 4 righe partenza + 28° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 29° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 30° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 31° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 32° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 33° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 34° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 35° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 36° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 37° riga primo passo , ottengo -> numero righe: 5               (0.000006 sec)
-
- -Eseguo Gauss su 4 righe partenza + 38° riga primo passo , ottengo -> numero righe: 5               (0.000005 sec)
-
- -Eseguo Gauss su 4 righe partenza + 39° riga primo passo , ottengo -> numero righe: 5               (0.000004 sec)
-
- -Eseguo Gauss su 4 righe partenza + 40° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 41° riga primo passo , ottengo -> numero righe: 5               (0.000014 sec)
-
- -Eseguo Gauss su 4 righe partenza + 42° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 43° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 44° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 45° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 46° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 47° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 48° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 49° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 50° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 51° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 52° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 53° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 54° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 55° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 56° riga primo passo , ottengo -> numero righe: 5               (0.000015 sec)
-
- -Eseguo Gauss su 4 righe partenza + 57° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 58° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 59° riga primo passo , ottengo -> numero righe: 5               (0.000004 sec)
-
- -Eseguo Gauss su 4 righe partenza + 60° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 61° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 62° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 63° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 64° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 65° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 66° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 67° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 68° riga primo passo , ottengo -> numero righe: 5               (0.000007 sec)
-
- -Eseguo Gauss su 4 righe partenza + 69° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 70° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 71° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 72° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 73° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 74° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 75° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 76° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 77° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 78° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 79° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 80° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 81° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 82° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 83° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 84° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 85° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 86° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 87° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 88° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 89° riga primo passo , ottengo -> numero righe: 5               (0.000014 sec)
-
- -Eseguo Gauss su 4 righe partenza + 90° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 91° riga primo passo , ottengo -> numero righe: 5               (0.000003 sec)
-
- -Eseguo Gauss su 4 righe partenza + 92° riga primo passo , ottengo -> numero righe: 5               (0.000015 sec)
-
-Target raggiunto, soluzione trovata in 0.010256 sec
+Target raggiunto, soluzione trovata in 0.002328 sec
 
