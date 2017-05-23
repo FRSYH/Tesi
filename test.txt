@@ -1,5 +1,5 @@
 
-Inizializzazione in 0.000071 sec
+Inizializzazione in 0.000073 sec
 
 Mappa creata in 0.000553 sec
 
@@ -8,16 +8,20 @@ Inizio computazione
  -Eseguo Gauss, numero righe: 4               (0.000005 sec)
 Gradi della matrice = { 3  4 }
 
- -Eseguo moltiplicazione, numero righe: 95     (0.000035 sec)
- -Eseguo Gauss, numero righe: 92               (0.000766 sec)
-
+RICERCA RIGHE INDIPENDENTI
+RICERCA RIGHE INDIPENDENTI completata con successo
+righe indipendenti trovate; 88
+RICOMPOSIZIONE matrice
 
 RICERCA RIGHE INDIPENDENTI
 RICERCA RIGHE INDIPENDENTI completata con successo
+righe indipendenti trovate; 22
+RICOMPOSIZIONE matrice
 
-righe indipendenti trovate; 88
-RICOMPOSIZIONE
+RICERCA RIGHE INDIPENDENTI
+RICERCA RIGHE INDIPENDENTI completata con successo
+righe indipendenti trovate; 98
+RICOMPOSIZIONE matrice
 
-
-Target raggiunto, soluzione trovata in 0.002328 sec
+Target raggiunto, soluzione trovata in 0.132223 sec
 
