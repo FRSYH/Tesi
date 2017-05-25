@@ -164,10 +164,10 @@ int main (void){
 
 	//RISOLUZIONE PROBLEMA
 	init_degree_vector(degree,num_var);                //inizializzazione vettore dei gradi dei polinomi
-	test(&m,d_row,col,map,degree,vet,num_var);      //eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
+	execute(&m,d_row,col,map,degree,vet,num_var);      //eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 
 	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start);
-	//print_matrix(m, row, col);	                       //stampa la matrice soluzione
+	print_matrix(m, row, col);	                       //stampa la matrice soluzione
 
 
 	matrix_free_long(&m,row,col);					   //deallocazione di tutti i puntatori utilizzati
@@ -682,9 +682,6 @@ La terminazione è data da:
 	- iterazione infinita, non c'è soluzione con gradi completi
 
 */
-
-	
-	
 	double start;
 	int *m_deg = calloc(max_degree+1, sizeof(int));
 	printf("Inizio computazione\n");
@@ -700,13 +697,9 @@ La terminazione è data da:
 		start = omp_get_wtime();	
 		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);  //moltiplico la matrice per tutti i monomi possibili
 		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-start);
-
-
-
 /*		end = clock();
 		time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 		printf("     (%f sec)", time_spent);  */
-		
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
 		start = omp_get_wtime();	
@@ -728,7 +721,6 @@ La terminazione è data da:
 			}			
 		}
 	}
-	print_matrix(*m, *d_row, col);
 	free(m_deg);
 }
 
@@ -1010,8 +1002,13 @@ void matrix_alloc_long(long long ***m, int row, int col){
 //Allocazione di una matrice di tipo int con dimensioni indicate.	
 	*m = malloc(row * sizeof (long long *) );
 	if( *m != NULL )
-		for (int i=0; i<row; i++)
+		for (int i=0; i<row; i++){
 			(*m)[i] = calloc(col , sizeof (long) );	
+			if ((*m)[i]==NULL)
+			{
+				break;
+			}
+		}
 }
 
 void matrix_realloc_long(long long ***m, int new_row, int new_col){
@@ -1062,22 +1059,16 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 	
 	double start;
 	int *m_deg = calloc(max_degree+1, sizeof(int));
-	printf("Inizio computazione\n");
+	printf("Inizio computazione\n\n");
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
 	int flag,old,new,i;
 	flag = old = new = 0;
 	old = *d_row;
-
-
-	printf("\n -Eseguo Gauss, ");
-	fflush(stdout);
-	start = omp_get_wtime();	
+	
 	gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
 	eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
-	printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-start);
-	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
-	print_matrix_degree(m_deg);
+	printf("righe di partenza: %d\n\n", *d_row);
 
 	long long **m_recomposition;
 	long long **m_before;
@@ -1097,103 +1088,89 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 	
 	while( 1 ){
 
-		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);  //moltiplico la matrice per tutti i monomi possibili
+		printf("Eseguo moltiplicazione, ");
+		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);     //moltiplico la matrice per tutti i monomi possibili
+		printf("righe trovate: %d\n", *d_row);
+		printf("Eseguo Gauss, ");
 		gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
+		printf("righe trovate: %d\n", *d_row);
 		new = *d_row;
-  		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);  //dopo gauss controllo se la matrice trovata rispetta la condizione di terminazione
-  		if( new == old || target_degree(m_deg) == 0 ){
+  		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
+		eliminate_linear_dependent_rows(m,d_row,col,m_before,row_b,col_b);      //rimuovo da m le righe linearmente dipendenti da m_before
+		printf("RICOMPOSIZIONE matrice, ");		 
+		row_ex = *d_row;   														//numero di righe dopo aver estratto righe indipendenti 
 
-			eliminate_linear_dependent_rows(m,d_row,col,m_before,row_b,col_b);      //rimuove da m le righe linearmente dipendenti da m_before
-			printf("righe indipendenti trovate; %d\n", *d_row);
-			printf("RICOMPOSIZIONE matrice\n");
-			append_matrix(&m_recomposition,&row_b,col_b,*m,*d_row,col); 
-			gauss(m_recomposition, row_b, col);           
-			eliminate_null_rows(&m_recomposition,&row_b,col);   
-  			break;	
-  		}
-		matrix_realloc_long(&m_temp,*d_row,col);
-		matrix_cpy(*m,*d_row,col,m_temp);
-		row_gauss = *d_row;	
-
-
-		eliminate_linear_dependent_rows(m,d_row,col,m_before,row_b,col_b);      //rimuove da m le righe linearmente dipendenti da m_before
-		printf("righe indipendenti trovate; %d\n", *d_row);
-		printf("RICOMPOSIZIONE matrice\n");		 
-		row_ex = *d_row;   //numero di righe dopo aver estratto righe indipendenti 
-
-		append_matrix(&m_recomposition,&row_b,col_b,*m,*d_row,col);             //matrice composta solo da righe indipendenti
-		//devo verificare di non aver raggiunto la condizone di fine
+		append_matrix(&m_recomposition,&row_b,col_b,*m,*d_row,col);             //matrice composta dalle sole righe indipendenti trovate
+		
 		gauss(m_recomposition, row_b, col);           
 		eliminate_null_rows(&m_recomposition,&row_b,col);
-  		matrix_degree(m_recomposition,row_b,col,m_deg,vet,num_var);
-		
+		printf("righe trovate: %d\n\n", row_b);
+
+  		if( new == old || target_degree(m_deg) == 0 ){
+  			break;	
+  		}
 
 		matrix_realloc_long(&m_before,row_ex,col);
-		matrix_cpy(*m,row_ex,col,m_before);			//confronto con la matrice ricomposta da tutte le righe linearmente indipendenti trovate
+		matrix_cpy(*m,row_ex,col,m_before);			//nello step successivo confrontero la matrice m con la matrice delle righe indipendenti trovate
 		row_b = row_ex;
 
 	}
 
-	//print_matrix(m_recomposition,row_b,col); 
+	print_matrix(m_recomposition,row_b,col); 		//stampo la matrice delle righe indipendenti	
 
 	free(m_deg);
 	free(m_before);	
-	free(m_recomposition);		
-	
+	free(m_recomposition);	
 }
 
 
 void eliminate_linear_dependent_rows(long long ***m_test, int *row, int col, long long **m_before, int row_b, int col_b){
 
-	printf("\nRICERCA RIGHE INDIPENDENTI");
+	printf("eliminazione righe indipendenti, ");
 	int i,k,riduzione;		
 	double start;	
-	long long v[120]={};		 
-	long long **m2;
-	long long **m3;
-	matrix_alloc_long(&m2,row_b,col_b);
-	matrix_cpy(m_before,row_b,col_b,m2);				//copio la matrice m in m2
-	matrix_alloc_long(&m3,row_b,col_b);
-	matrix_cpy(m_before,row_b,col,m3);				//copio la matrice m in m3
+	long long v[120]={},**m2,**m3;		 
 
-	
+	matrix_alloc_long(&m2,row_b,col_b);
+	matrix_alloc_long(&m3,row_b,col_b);	
+	matrix_cpy(m_before,row_b,col_b,m2);			//copio la matrice m_before in m2
+	matrix_cpy(m_before,row_b,col,m3);				//copio la matrice m_before in m3
+
 	int d_row = row_b;  //indice delle righe di m3, dovrà cambiare con il tempo
 	int rows = *row;    //scorro le righe su un idice diverso per non sporcare il puntatore
-	riduzione = 0;
 
+	for(i=0; i<rows; i++){  //ciclo per tutte le righe della matrice m
 
-	for(i=0; i<rows; i++){
-
-		add_row_to_matrix(&m3,&d_row,col_b,(*m_test)[i]);
-		gauss(m3, d_row, col_b); 
-		eliminate_null_rows(&m3,&d_row,col);
+		add_row_to_matrix(&m3,&d_row,col_b,(*m_test)[i]);   //aggiungo alla matrice m3 l'i-esima riga della matrice m
+		gauss(m3, d_row, col_b); 							//eseguo gauss su m3
+		eliminate_null_rows(&m3,&d_row,col);				//elimino le eventuali righe nulle
 		if( d_row == row_b ){       //se il numero delle righe di m3 dopo la riduzione di gauss è uguale a quello della matrice m_before significa che ho trovato una riga linearmente dipendente
-			//devo eliminare questa riga, sposto tutte le righe rimanenti in alto di una posizione
+			//devo eliminare questa riga, --> sposto tutte le righe rimanenti in alto di una posizione
 			for(k=i+1; k<rows; k++){
 				array_copy( (*m_test)[k], (*m_test)[k-1], col);
 			}
-			riduzione ++;
 			rows --;
 			i --;
 		}
-		matrix_realloc_long(&m3,row_b, col_b);
+		matrix_realloc_long(&m3,row_b, col_b);		//ho finito la computazione sulla l'i-esima riga, mi preparo per la riga successiva, rialloco la matrice alla sua grandezza nativa
 		d_row = row_b;
-		matrix_cpy(m2,d_row,col,m3);
-
+		matrix_cpy(m2,d_row,col,m3);				//ricopio la matrice di partenza per ripetere il calcolo sulla riga successiva	
 	}
-	for(i=rows; i<*row;i++){
+
+	//alla fine di questo ciclo ho trovato quali righe di m sono linearmente indipendtenti da m_before, esse si trovano nelle prime rows righe.
+	//le successive righe, ovvero da rows a *row corrispondono alle righe dipendenti che ho eliminato.
+	//per eliminarle le asserisco tutte a 0 e richiamo la procedura di rimozione delle righe nulle.
+
+	for(i=rows; i<*row;i++){					
 		for(k=0;k<col;k++){
-			(*m_test)[i][k] = 0;
+			(*m_test)[i][k] = 0; 	//asserisco tutte le righe dipendenti a 0
 		}
 	}
-	eliminate_null_rows(m_test,row,col);
-//	print_matrix(*m_test,*row,col);
-
+	eliminate_null_rows(m_test,row,col);   //rimuovo le righe nulle
+	printf("righe indipendenti trovate; %d\n", *row);
 	free(m2);
 	free(m3);
-
-	printf("\nRICERCA RIGHE INDIPENDENTI completata con successo\n");
 }
 
 
