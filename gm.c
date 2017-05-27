@@ -5,43 +5,26 @@
 #include <ctype.h>
 #include <time.h>
 #include <omp.h>
+#include "linalg.h"
+#include "matrix.h"
+#include "scan.h"
+
 
 int max_degree = 0;
 long long module = 0;
 
-long long mod(long long n, long long p); //n mod p
-
-long long add_mod(long long a, long long b, long long p); // a + b mod p
-
-long long sub_mod(long long a, long long b, long long p); // a - b mod p
-
-long long mul_mod(long long a, long long b, long long p); // a * b mod p
-
-long long invers(long long n, long long p);  // inverso moltiplicativo in mod p
-
-void gauss(long long **m, int row, int col); // riduzione di gauss della matrice m
-
-void riduzione(long long **m, int row, int col, int riga_pivot, int j);
-
-void swap_rows(long long **m, int row, int col, int j, int i);  // scambia tra di loro due righe della matrice
-
-void print_matrix (long long **m, int row, int col); // stampa la matrice
+//moltiplica la riga indicata per tutti i possibili monomi
+void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int **vet, int num_var);
 
 int init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var,int (*ord) (const void *, const void *, void*)); //inizializza la matrice dei coefficienti
-
-//moltiplica la riga indicata per tutti i possibili monomi
-void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int **vet, int num_var); 
 
 //initialize the vector that keeps the number of monomial with the same grade and their position
 void init_degree_vector(int * degree, int num_var);
 
+
 //return the grade of a monomial
 int grado_monomio(int posizione, int **vet, int num_var);
 
-int combination(int n, int k);
-
-//restituisce il numero di tutti i possibili monomi con n variabili e grado <=m
-int monomial_combinations(int n, int m); 
 
 //restituisce un array contenente tutti i len monomi con n variabili e grado <= m
 //len è il numero di possibili monomi con n variabili e grado <= m
@@ -51,23 +34,11 @@ int **monomial_computation(int n, int m, int len);
 //e li inserisce nell'array vet. Chiamata da monomial_computation
 void monomial_computation_rec(int n, int m,  int **vet, int turn, int *monomial, int *pos);
 
-//copia il vettore vet2 in vet1, entrambi di lunghezza len
-void vctcpy(int *vet1, int const *vet2, int len);
-
-//confronta due monomi di *arg variabili secondo l'ordinamento grevlex
-//restituisce un intero positivo se monom1 > monom2, zero se sono uguali, uno negativo altrimenti
-int grevlex_comparison(const void *mon1, const void *mon2, void *arg);
-
 //mappa tutte le possibili moltiplicazioni dei monomi di n variabili e grado <= m
 //dell'array vet di lunghezza len, nella matrice map[len][len]. compar è la funzione
 //secondo cui vet è ordinato.
 void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const void *, const void *, void*));
 
-
-//mancante nella stdlib, controparte di qsort_r
-void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
-                 int (*compar) (const void *, const void *, void *),
-                 void *arg);
 
 
 //multiply the entire matrix for all possible correct monomial
@@ -79,45 +50,19 @@ void matrix_degree(long long **m, int row, int col, int *m_deg, int **vet, int n
 //formatted print of matrix degree
 void print_matrix_degree(int *m_deg);
 
-//compute the number of null rows (rows full of 0)
-int null_rows(long long **m, int row, int col);
-
-//eliminate the matrix null rows (reallocation - resize)
-void eliminate_null_rows(long long ***m, int *row, int col);
-
 //execute the multiplication, gauss reduction, elimination null_rows and compare the result to target
 void execute(long long ***m, int *d_row, int col, int **map, int *degree, int **vet, int num_var);
 
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
 
-void allocation(long long ***m, int *row, int *col, int *num_var, char **v, int *n);
-
-void matrix_free_long(long long ***m, int row, int col);
-
-void matrix_alloc_int(int ***m, int row, int col);
-
-void matrix_free_int(int ***m, int row, int col);
-
-int parse(int num_var, char *vet, long long **m, int **vet_grd, int len,int (*ord) (const void *, const void *, void*));
-
-int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *grade, int pos_pol);
-
-//associa ad *ord la funzione di ordinamento scelta
-int order(int (**ord) (const void *, const void *, void*), int n);  
-
-//calcola il fattoriale di n
-int factorial(int n);
-
-void matrix_cpy(long long **m1, int row, int col, long long **m2);
-
-void matrix_alloc_long(long long ***m, int row, int col);
-
-void add_row_to_matrix(long long ***m, int *row, int col, long long *r);
 
 void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet, int num_var);
 
 void eliminate_linear_dependent_rows(long long ***m_test, int *row, int col, long long **m_before, int row_b, int col_b);
+
+
+
 
 int main (void){
 	
@@ -132,7 +77,7 @@ int main (void){
 
 
 	
-	allocation(&m,&row,&col,&num_var,&v,&n);  //alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
+	allocation(&m,&row,&col,&num_var,&v,&n,&module,&max_degree);  //alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
 	d_row = &row;
 
 	if( order(&ord,n) != 0 ){
@@ -179,146 +124,9 @@ int main (void){
 }
 
 
-//n mod p 
-//Riduzione di n in modulo p.
-long long mod(long long n, long long p){
-	long long v = n,x =0;
-
-	if( v >= p ){
-		v = n%p;
-	}else{
-		if( v < 0 ){
-			x = n/p;
-			v = n-(x*p);
-			v += p;
-		}
-	}
-	return v;
-}
-
-//inverso moltiplicativo di n in modulo p (con p primo).
-long long invers(long long n, long long p){
-	long long b0 = p, t, q;
-	long long x0 = 0, x1 = 1;
-	if (p == 1) return 1;
-	while (n > 1) {
-		q = n / p;
-		t = p, p = (n % p), n = t;
-		t = x0, x0 = x1 - q * x0, x1 = t;
-	}
-	if (x1 < 0) x1 += b0;
-	return x1;	
-}
-
-
-// a + b mod p
-//sommatoria di a e b in modulo p
-long long add_mod(long long a, long long b, long long p){
-	return mod((a+b),p);
-}
-
-// a - b mod p
-//sottrazione di a e b in modulo p
-long long sub_mod(long long a, long long b, long long p){
-	return mod((a-b),p);
-}
-
-// a * b mod p
-//prodotto di a e b in modulo p
-long long mul_mod(long long a, long long b, long long p){
-	return mod((a*b),p);
-}
-
-//Calcola la riduzione di Gauss della matrice m (matrice di grandezza row e col).
-//La riduzione è calcolata sulla triangolare superiore sinistra.
-void gauss(long long **m, int row, int col){
-	
-	int pivot_riga, pivot_colonna,righe_trovate,j;
-
-	righe_trovate = -1;
-	for( j=0; j<col; j++){
-		pivot_colonna = col-(j+1);
-		for( pivot_riga=(righe_trovate+1); pivot_riga<row; pivot_riga++ ){
-			if( m[pivot_riga][pivot_colonna] != 0 ){
-				riduzione(m,row,col,pivot_riga,pivot_colonna);
-				righe_trovate++;
-				swap_rows(m,row,col,righe_trovate,pivot_riga);
-				break;
-			}
-		}
-	}
-}
-
-//Calcola la riduzione di Gauss di una singola riga della matrice m.
-void riduzione(long long **m, int row, int col, int riga_pivot, int j){
-	
-	int r,k;
-	long long s,inv,a;
-	//#pragma omp parallel for private(inv,s,k,a) shared (r,m)
-	for( r=riga_pivot+1; r<row; r++ ){
-		if( m[r][j] != 0 ){
-			inv = invers(m[riga_pivot][j],module);			//calcola l'inverso moltiplicativo di m[riga_pivot][j] nel campo indicato
-			s = mul_mod(inv,m[r][j],module);
-			//#pragma omp parallel for private(a)
-			for( k=0; k<col; k++ ){
-				a = mul_mod(s,m[riga_pivot][k],module);
-				m[r][k] = sub_mod(m[r][k],a,module);
-
-			}
-			
-		}
-	}
-}
-
-//Scambio di due righe della matrice m.
-void swap_rows(long long **m, int row, int col, int j, int i){
-	
-	int k;
-	long long tmp;
-	//#pragma omp parallel for private (tmp) shared (m)
-	for(k=0;k<col;k++){
-		tmp = m[i][k];
-		m[i][k] = m[j][k];
-		m[j][k] = tmp;
-	}
-}
-
-//Stampa formattata della matrice
-void print_matrix (long long **m, int row, int col){
-
-	int i,j;	
-	for (i=0;i<row;i++)
-	{
-		for (j=0;j<col;j++){
-			printf("%lli ",m[i][j]);						
-		}
-		printf("\n\n\n");
-	}
-	printf("\n");
-}
-
-
 int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var, int (*ord) (const void *, const void *, void*) ){
 //Inizializza la matrice principale (dei coefficienti) con i coefficienti dei polinomi forniti come input.
-	return parse(num_var,v,m,vet_grd,col,ord);
-}
-
-
-//restituisce il numero di tutti i possibili monomi con n variabili e grado <= m
-int monomial_combinations(int n, int m) {
-
-	// dichiarato double per compatibilità con il fattoriale della libreria gsl
-	int result = 0, num, den;
-	// result = Sommatoria (per j da 1 a m) {(j+n-1)! / j!*(n-1)!}
-	// semplificato a: Sommatoria (per j da 1 a m) {(j+n-1)*(j+n-2)* ... *(n) / j!}
-	for (int j = 1; j <= m; j++) {
-		num = 1;
-		for (int k = j; k > 0 ; k--)
-			num = num * (n+k-1);
-		den = factorial(j);
-		result += (num / den);
-	}
-	return  result;
+	return parse(num_var,v,m,vet_grd,col,module,ord);
 }
 
 
@@ -397,13 +205,6 @@ void init_degree_vector(int * degree, int num_var){
 }
 
 
-int combination(int n, int k){
-	int a,b,c;
-	a = factorial(n+k-1);
-	b = factorial(k);
-	c = factorial((n+k-1)-k);
-	return  a/(c*b);
-}
 
 /*
 mappa tutte le possibili moltiplicazioni dei monomi di n variabili e grado <= m
@@ -443,74 +244,6 @@ void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const
 				map[row][col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), compar, &n)) - vet;
 		}
 	free(temp);
-}
-
-//https://git.devuan.org/jaretcantu/eudev/commit/a9e12476ed32256690eb801099c41526834b6390
-//mancante nella stdlib, controparte di qsort_r
-//effettua una ricerca binaria di key nell'array base di lunghezza nmemb i cui elementi
-//hanno dimensione size, e restituisce un puntatore all'elemento uguale a key se c'è, altrimenti NULL.
-//compar è la funzione di ordinamento con cui viene confrontato key con base
-//arg è il terzo argomento di compar
-void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
-                 int (*compar) (const void *, const void *, void *),
-                 void *arg) {
-	size_t l, u, idx;
-	const void *p;
-	int comparison;
-
-	l = 0;
-	u = nmemb;
-	while (l < u) {
-		idx = (l + u) / 2;
-		p = (void *)(((const char *) base) + (idx * size));
-		comparison = compar(key, p, arg);
-		if (comparison < 0)
-			u = idx;
-		else if (comparison > 0)
-			l = idx + 1;
-		else
-			return (void *)p;
-	}
-	return NULL;
-}
-
-//confronta due monomi di *arg variabili secondo l'ordinamento grevlex
-//restituisce un intero positivo se monom1 > monom2, zero se sono uguali, uno negativo altrimenti
-//i monomi sono sempre rappresentati come array di lunghezza pari al numero delle variabili
-//sono fatti diversi cast perchè il tipo degli argomenti è compatibile con qsort_r
-int grevlex_comparison(const void *monom1, const void *monom2, void *arg) {
-
-	int degree1 = 0, degree2 = 0, n, *mon1, *mon2;
-	n = *((int *) arg);
-	mon1 = *((int **) monom1);
-	mon2 = *((int **) monom2);
-	
-	//calcolo i gradi dei monomi
-	for (int v = 0; v < n; v++) {
-		degree1 += mon1[v];
-		degree2 += mon2[v];
-	}
-	if (degree1 > degree2)
-		return 1;
-	else if (degree1 < degree2)
-		return -1;
-	//se il grado è uguale guardo l'utlima cifra non nulla
-	//del array risultante dalla sottrazione dei monomi
-	else {
-		int *temp = malloc(n * sizeof(int));
-		for (int v = 0; v < n; v++)
-			temp[v] = mon1[v] - mon2[v];
-		for (int v = (n-1); v >= 0; v--) {
-			if (temp[v] != 0) {
-				return -temp[v];
-				free(temp);
-				//per evitare di fare free due volte sul  puntatore lo setto a NULL dopo la free
-				temp = NULL;
-			}
-		}
-		free(temp);
-	}	
-	return 0;
 }
 
 
@@ -590,13 +323,6 @@ void monomial_computation_rec(int n, int m, int **vet, int turn, int *monomial, 
 }
 
 
-//copia il vettore vet2 in vet1, entrambi di lunghezza len
-void vctcpy(int *vet1, const int *vet2, int len) {
-	for (int i = 0; i < len; i++)
-		vet1[i] = vet2[i];
-	return;
-}
-
 
 void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int **vet, int num_var){
 //Moltiplica tutte le righe della matrice m per tutti i monomi possibili che forniscono un risultato che ha grado <= grado massimo.	
@@ -639,40 +365,6 @@ void print_matrix_degree(int *m_deg){
 
 
 
-int null_rows(long long **m, int row, int col){
-//calcola il numero di righe nulle presenti nella matrice m.
-
-	int i,j,last,null_rows;
-	null_rows = 0;
-	for(i=0; i<row; i++){
-		last = -1;
-		for(j=col-1; j>-1; j--){
-			if(m[i][j] != 0 ){
-				last = j;
-				break;
-			}
-		}
-		if( last == -1 )
-			null_rows++;
-	}
-	return null_rows;
-}
-
-
-void eliminate_null_rows(long long ***m, int *row, int col){
-//Elimina dalla matrice m le righe nulle.
-//N.B. questa procedura elimina le ultime righe nulle della matrice.
-//Questa funzione DEVE essere utilizzata dopo la riduzione di Gauss.
-//La riduzione di Gauss sposta nelle ultime posizioni tutte le righe nulle.
-//Se non si esegue questa funzione dopo Gauss si possono eliminare righe non nulle.	
-
-	int null_row = null_rows(*m,*row,col);
-	if(null_row != 0){
-		*m = realloc( *m , (*row - null_row ) * sizeof (long long *));
-		*row = *row - null_row;
-	}
-}
-
 
 void execute(long long ***m, int *d_row, int col, int **map, int *degree, int **vet, int num_var){
 /*
@@ -703,7 +395,7 @@ La terminazione è data da:
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
 		start = omp_get_wtime();	
-		gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
+		gauss(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
 		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-start);
   		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
@@ -741,296 +433,6 @@ int target_degree(int *v){
 }
 
 
-void allocation(long long ***m, int *row, int *col, int *num_var, char **v, int *n){
-/*
-Legge da input le seguenti informazioni:
-	- modulo dei coefficienti
-	- grado massimo
-	- numero dei polinomi di partenza
-	- tipo di ordinamento
-	- variabili utilizzate nei polinomi
-
-
-con queste informazioni alloca la matrice principale (matrice che conterrà i polinomi) e stabilisce il numero di variabili utilizzate.
-*/
-	scanf("%lli",&module); //leggo il modulo
-	getchar();
-	scanf("%d",&max_degree); //leggo il grado massimo
-	getchar();
-	scanf("%d",row);  //leggo numero dei polinomi di partenza
-	getchar();
-	scanf("%d",n);  //leggo tipo di ordinamento
-	getchar();
-
-	int i,j,k,pos_pol,num_pol;
-	char c;
-
-	i=0;
-	pos_pol = 0;
-	*v = malloc(sizeof(char));
-	c = getchar();
-	while( c != '\n' ){
-		(*v)[i] = c;
-		i++;
-		(*num_var)++;
-		*v = realloc(*v, (i+1)*sizeof(char) );
-		c = getchar();
-	}
-
-	*col = 1+monomial_combinations(*num_var, max_degree);
-
-	*m = malloc((*row) * sizeof (long long *) );            // allocazione della matrice dei coefficienti
-	if( *m != NULL )
-		for (int i=0; i<(*row); i++)
-			(*m)[i] = calloc((*col) , sizeof (long long) );	
-
-
-}
-
-void matrix_free_long(long long ***m, int row, int col){
-//Deallocazione di una matrice di tipo long long con dimensioni indicate.	
-	for (int i=0; i<row; i++)      
-		free((*m)[i]);
-	free(*m);	
-}
-
-void matrix_alloc_int(int ***m, int row, int col){
-//Allocazione di una matrice di tipo int con dimensioni indicate.	
-	*m = malloc(row * sizeof (int *) );
-	if( *m != NULL )
-		for (int i=0; i<row; i++)
-			(*m)[i] = calloc(col , sizeof (int) );	
-}
-
-void matrix_free_int(int ***m, int row, int col){
-//Deallocazione di una matrice di tipo int con dimensioni indicate.	
-	for (int i=0; i<row; i++)      
-		free((*m)[i]);
-	free(*m);	
-}
-
-int parse(int num_var, char *vet, long long **m, int **vet_grd, int len, int (*ord) (const void *, const void *, void*) ){
-/*
-Esegue la lettura (parse) dei polinomi di partenza nel seguente modo.
-Si legge un monomio alla volta. 
-Il monomio viene scomposta dalla funzione parse_mon.
-Si inserisce il coefficiente del monomio nella matrice principale (matrice dei coefficienti) nella posizione corretta.
-La posizione corretta è indicata da vet_grd.
-Si leggono tutti i monomi di tutti i polinomi di partenza.
-In caso di errore di formato nell'input la funzione si interrompe restituendo segnale di errore -1.
-*/
-	int pos_pol = 0,i,col;
-	char c,* mon;
-	long long cof = 0;
-	c = getchar();
-
-	int *grade;
-
-	grade = calloc(3,sizeof(int));
-
-	while( c != EOF ){
-
-		while( c != '\n' && c != EOF){
-			mon = malloc( sizeof(char) );
-			i = 0;	
-			while( c != '+' && c != EOF && c != '\n'){
-				mon = realloc(mon, (i+1)* sizeof(char));
-				mon[i] = c;
-				i++;
-				c = getchar();
-			}
-			if( parse_mon(mon,i,&cof,num_var,vet,grade,pos_pol) == -1 ){
-				return -1;
-			}
-			//inserire monomio in posizione corretta
-			col = (int **)(bsearch_r((void *) &grade, (void *) vet_grd, len, (sizeof(int*)), ord, &num_var)) - vet_grd;
-			m[pos_pol][col] = cof;
-			if(c=='\n'){
-				pos_pol++;
-			}
-			mon = calloc(i+1,sizeof(char));
-			grade = calloc(3,sizeof(int));
-			c = getchar();
-		}
-		c = getchar();	
-	}
-	free(mon);
-}
-
-int parse_mon(char * mon, int len,long long * val, int num_var, char *vet, int *grade, int pos_pol){
-/*
-La funzione esegue il parse di un singolo monomio.
-In particolare si divide il monomio in:
-	- coefficiente (se esiste, altrimenti = 1)
-	- vettore rappresentante i gradi delle singole variabili
-
-es. 3 variabili xyz, Monomio: 345x^2*y 
-	- coefficiente 345
-	- vettore dei gradi [2,1,0] ogni posizione rappresenta il grado della variabile corrispondente (le variabili seono inserite in ordine alfabetico).
-
-Se il coefficiente non è presente allora = 1
-Se l'esponente di una variabile non è presente allora = 1
-se una variabile non compare nel monomio allora grado = 0
-*/
-	int i,k,pos_var;
-	char c,* cof,*exp;
-	cof = malloc( sizeof(char) );
-	exp = malloc( sizeof(char) );
-	i = 0;
-	pos_var = 0;
-	if( isdigit(mon[i]) != 0 ){  // se il primo carattere letto è un numero
-		i = 0;
-		while( isdigit(mon[i]) && i<len){ //procedo alla lettura del coefficiente
-			cof = realloc(cof, (i+1) * sizeof(char));
-			cof[i] = mon[i];
-			i++;                   
-		}
-		*val = mod(atoll(cof),module);  //a questo punto ho letto il coefficiente e lo riduco in modulo se necessario
-
-		
-	}else{ // altrimenti se il primo carattere letto non è un numero ma una lettera
-		if( isalpha(mon[i]) != 0 ){
-			*val = 1;   // significa che il coefficiente del monomio è 1
-			
-		}else{ 
-			// se il primo carattere non è ne un numero ne una lettera allora è un carattere non valido -> ERRORE
-			return -1;  //terminazione parse con codice di errore -1
-		}	
-	}
-	if( i < len ){   
-		while( i < len ){
-			if( mon[i] == '*' ){ 
-				i++;    
-			}
-			if( i<len && (isalpha(mon[i]) != 0) ){  //cerco le variabili presenti
-				for(k=0; k<num_var; k++){
-					if( vet[k] == mon[i] ){
-						pos_var = k;
-						break;			//quando trovo una variabile salvo la sua posizione e interrompo
-					}
-				}
-				i++;
-				if( i<len ){  //controllo se la variabile ha un grado
-					if( mon[i] == '^' ){ //se trovo il carattere di elevamento a potenza allora c'è un grado
-						i++;
-						if( isdigit(mon[i]) != 0 ){
-							k = 0;
-							while( isdigit(mon[i]) != 0 && i < len ){
-								exp = realloc(exp, (k+1) * sizeof(char));
-								exp[k] = mon[i];
-								i++;
-								k++;
-							}
-						grade[pos_var] = atoi(exp); //leggo il grado della variabile e lo salvo nel 
-													//vettore che rappresenta tutte le possibili variabili nella posizione adeguata
-						}else{
-							// se il carattere successivo al carattere di elevamento a potenza non è un numero allora errore di input
-							return -1;									
-						}
-					}else{  // se non esiste il simbolo di elevamento a potenza allora significa che il grado della variabile è 1
-						grade[pos_var] = 1;	
-					}
-				}else{ // se termino il monomio con una variabile senza grado allora il suo grado è 1
-					grade[pos_var] = 1;
-				}								
-			}else{
-				// se dopo il simbolo * non trovo un carattere alfabetico che indica una variabile errore di input
-				return -1;				
-			}
-			i++;
-		}		
-	}
-	free(exp);
-	free(cof);
-}
-
-
-int order(int (**ord) (const void *, const void *, void*), int n){
-//inizializza il puntatore ord alla funzione di ordinamento adeguata. Il numero n indica quale funzione scegliere.
-
-	switch(n){
-
-		case 0:
-			*ord = grevlex_comparison;
-			return 0;
-			break;
-
-		default:
-			return -1;
-			break;	
-
-	}
-}
-
-//calcola il fattoriale di n (se n è negativo return -1)
-int factorial(int n){
-	int k;
-
-	if (n<0) //se n è negativo non esiste il fattoriale
-	{
-		return -1; //codice di errore
-	}else{ //altrimenti calcolo il fattoriale
-
-		if( n==0 || n==1 ){
-			return 1;
-		}else{
-			k=1;
-			for (int i = 2; i <= n; i++){
-				k *= i;	
-			}
-			return k;
-		}
-	}
-}
-
-
-
-//copia la matrice m1 nella matrice m2
-void matrix_cpy(long long **m1, int row, int col, long long **m2){
-	
-	int i,j;
-	for(i=0;i<row;i++){
-		for(j=0;j<col;j++){
-			m2[i][j] = m1[i][j];
-		}
-	}
-
-}
-
-
-void matrix_alloc_long(long long ***m, int row, int col){
-//Allocazione di una matrice di tipo int con dimensioni indicate.	
-	*m = malloc(row * sizeof (long long *) );
-	if( *m != NULL )
-		for (int i=0; i<row; i++){
-			(*m)[i] = calloc(col , sizeof (long) );	
-			if ((*m)[i]==NULL)
-			{
-				break;
-			}
-		}
-}
-
-void matrix_realloc_long(long long ***m, int new_row, int new_col){
-	int i;
-	*m = realloc( *m , (new_row) * sizeof (long long *));
-	for(i=0; i<new_row; i++){
-		(*m)[i] = realloc((*m)[i] , new_col * sizeof (long long) );
-	}
-}
-
-//aggiunge la riga r alla matrice m, r deve avere linghezza uguale al numero delle colonne di m
-void add_row_to_matrix(long long ***m, int *row, int col, long long *r){
-	
-	int i;
-	*m = realloc( *m , (*row+1) * sizeof (long long *));
-	(*m)[*row] = malloc(col * sizeof (long long) );
-	for(i=0; i<col; i++){
-		(*m)[*row][i] = r[i];
-	}
-	*row = *row + 1;	
-
-}
 
 void print_array(long long *v, int len){
 	for(int i=0; i< len; i++){
@@ -1045,15 +447,6 @@ void array_copy(long long *v1, long long *v2, int len){
 }
 
 
-void append_matrix(long long ***m1, int *row1, int col1, long long **m2, int row2, int col2){
-	int i=0;
-	if( col1 == col2 ){ //se le matrici hanno lo stesso numero di colonne
-		for(i=0; i<row2; i++){
-			add_row_to_matrix(m1,row1,col1,m2[i]);
-		}
-	}
-}
-
 void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet, int num_var){
 	
 	
@@ -1066,7 +459,7 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 	flag = old = new = 0;
 	old = *d_row;
 	
-	gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
+	gauss(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
 	eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
 	printf("righe di partenza: %d\n\n", *d_row);
 
@@ -1092,7 +485,7 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);     //moltiplico la matrice per tutti i monomi possibili
 		printf("righe trovate: %d\n", *d_row);
 		printf("Eseguo Gauss, ");
-		gauss(*m, *d_row, col);                                     //applico la riduzione di Gauss
+		gauss(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
 		printf("righe trovate: %d\n", *d_row);
 		new = *d_row;
@@ -1103,7 +496,7 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 
 		append_matrix(&m_recomposition,&row_b,col_b,*m,*d_row,col);             //matrice composta dalle sole righe indipendenti trovate
 		
-		gauss(m_recomposition, row_b, col);           
+		gauss(m_recomposition, row_b, col, module);           
 		eliminate_null_rows(&m_recomposition,&row_b,col);
 		printf("righe trovate: %d\n\n", row_b);
 
@@ -1143,7 +536,7 @@ void eliminate_linear_dependent_rows(long long ***m_test, int *row, int col, lon
 	for(i=0; i<rows; i++){  //ciclo per tutte le righe della matrice m
 
 		add_row_to_matrix(&m3,&d_row,col_b,(*m_test)[i]);   //aggiungo alla matrice m3 l'i-esima riga della matrice m
-		gauss(m3, d_row, col_b); 							//eseguo gauss su m3
+		gauss(m3, d_row, col_b, module); 							//eseguo gauss su m3
 		eliminate_null_rows(&m3,&d_row,col);				//elimino le eventuali righe nulle
 		if( d_row == row_b ){       //se il numero delle righe di m3 dopo la riduzione di gauss è uguale a quello della matrice m_before significa che ho trovato una riga linearmente dipendente
 			//devo eliminare questa riga, --> sposto tutte le righe rimanenti in alto di una posizione
