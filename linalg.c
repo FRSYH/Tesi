@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "matrix.h"
 #include "linalg.h"
-
+#include <stdio.h>
 //n mod p 
 //Riduzione di n in modulo p.
 long long mod(long long n, long long p){
@@ -90,14 +90,50 @@ void gauss(long long **m, int row, int col, int modulo){
 	}
 }
 
+void gauss2(long long **m, int row, int col, int module){
+	
+	int pivot_riga = 0,r = 0,righe_trovate = 0,i,k;
+	long long s,inv,a;
+
+	for(int pivot_colonna = col-1; pivot_colonna >= 0; pivot_colonna-- ){
+		r = righe_trovate;
+
+		while( r < row && m[r][pivot_colonna] == 0 ){
+			r++;
+		}
+		// ho trovato la prima riga con elemento non nullo in posizione r e pivot_colonna oppure non esiste nessuna riga con elemento non nullo in posizione pivot_colonna
+
+		if( r < row ){ //significa che ho trovato un valore non nullo
+			swap_rows(m,row,col,righe_trovate,r); //sposto la riga appena trovata nella posizone corretta
+			pivot_riga = righe_trovate;
+			righe_trovate++;
+			#pragma omp parallel for private(i,inv,s,k,a) shared (m)		
+			for( i = righe_trovate; i < row; i++ ){
+						
+				if( m[i][pivot_colonna] != 0 ){
+					inv = invers(m[pivot_riga][pivot_colonna],module);		//inverso dell´ elemento in m[r][pivot_colonna]
+					s = mul_mod(inv,m[i][pivot_colonna],module);						
+					#pragma omp parallel for private (k,a) shared (m)	
+					for( k = 0; k < col; k++ ){
+						a = mul_mod(s,m[pivot_riga][k],module);
+						m[i][k] = sub_mod(m[i][k],a,module);
+
+					}
+				}
+			}
+		}
+	}
+}
+
 
 //Calcola la riduzione di Gauss di una singola riga della matrice m.
 void riduzione(long long **m, int row, int col, int riga_pivot, int j, int module){
 	
 	int r,k;
 	long long s,inv,a;
-	#pragma omp parallel for private(inv,s,k,a) shared (r,m)
+	//#pragma omp parallel for private(inv,s,k,a) shared (r,m)
 	for( r=riga_pivot+1; r<row; r++ ){
+
 		if( m[r][j] != 0 ){
 			inv = invers(m[riga_pivot][j],module);			//calcola l'inverso moltiplicativo di m[riga_pivot][j] nel campo indicato
 			s = mul_mod(inv,m[r][j],module);

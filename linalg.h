@@ -13,6 +13,8 @@ long long invers(long long n, long long p);  // inverso moltiplicativo in mod p
 
 void gauss(long long **m, int row, int col, int modulo); // riduzione di gauss della matrice m
 
+void gauss2(long long **m, int row, int col, int modulo); // riduzione di gauss della matrice m
+
 void riduzione(long long **m, int row, int col, int riga_pivot, int j, int module);
 
 int combination(int n, int k);

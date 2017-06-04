@@ -7,7 +7,7 @@ void swap_rows(long long **m, int row, int col, int j, int i){
 	
 	int k;
 	long long tmp;
-	#pragma omp parallel for private (tmp) shared (m)
+	#pragma omp parallel for private (k,tmp) shared (m)
 	for(k=0;k<col;k++){
 		tmp = m[i][k];
 		m[i][k] = m[j][k];
