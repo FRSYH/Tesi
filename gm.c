@@ -403,8 +403,6 @@ La terminazione è data da:
 
 		new = *d_row;
 
-
-
 		if( old == new  ){ //se per due volte trovo una matrice con le stesso numero di righe mi fermo
 			flag = 1;
 		}else{
@@ -414,8 +412,6 @@ La terminazione è data da:
 				old = new; 
 			}			
 		}
-
-		//flag = 1;
 
 	}
 	free(m_deg);
