@@ -109,12 +109,11 @@ void gauss2(long long **m, int row, int col, int module){
 			righe_trovate++;
 			#pragma omp parallel for private(i,inv,s,k,a) shared (m)		
 			for( i = righe_trovate; i < row; i++ ){
-						
 				if( m[i][pivot_colonna] != 0 ){
 					inv = invers(m[pivot_riga][pivot_colonna],module);		//inverso dell´ elemento in m[r][pivot_colonna]
 					s = mul_mod(inv,m[i][pivot_colonna],module);						
 					#pragma omp parallel for private (k,a) shared (m)	
-					for( k = 0; k < col; k++ ){
+					for( k = 0; k < pivot_colonna+1; k++ ){
 						a = mul_mod(s,m[pivot_riga][k],module);
 						m[i][k] = sub_mod(m[i][k],a,module);
 
