@@ -381,6 +381,8 @@ La terminazione è data da:
 	flag = old = new = 0;
 	old = *d_row;
 	
+	int st = 0;
+
 	while( flag != 1 ){
 
 		printf("\n -Eseguo moltiplicazione, ");
@@ -394,7 +396,7 @@ La terminazione è data da:
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
 		start = omp_get_wtime();	
-		gauss2(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
+		gauss2(*m, *d_row, col, module, st);                                     //applico la riduzione di Gauss
 		
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
 		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-start);
@@ -402,6 +404,7 @@ La terminazione è data da:
 		print_matrix_degree(m_deg);
 
 		new = *d_row;
+		st = new;
 
 		if( old == new  ){ //se per due volte trovo una matrice con le stesso numero di righe mi fermo
 			flag = 1;

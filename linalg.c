@@ -90,10 +90,11 @@ void gauss(long long **m, int row, int col, int modulo){
 	}
 }
 
-void gauss2(long long **m, int row, int col, int module){
+void gauss2(long long **m, int row, int col, int module, int start){
 	
 	int pivot_riga = 0,r = 0,righe_trovate = 0,i,k;
 	long long s,inv,a;
+	int st = start,flag=0;
 
 	for(int pivot_colonna = col-1; pivot_colonna >= 0; pivot_colonna-- ){
 		r = righe_trovate;
@@ -102,13 +103,18 @@ void gauss2(long long **m, int row, int col, int module){
 			r++;
 		}
 		// ho trovato la prima riga con elemento non nullo in posizione r e pivot_colonna oppure non esiste nessuna riga con elemento non nullo in posizione pivot_colonna
-
 		if( r < row ){ //significa che ho trovato un valore non nullo
-			swap_rows(m,row,col,righe_trovate,r); //sposto la riga appena trovata nella posizone corretta
+			if( r != righe_trovate ){
+				swap_rows(m,row,col,righe_trovate,r); //sposto la riga appena trovata nella posizone corretta
+				flag = 1;
+			}			
 			pivot_riga = righe_trovate;
 			righe_trovate++;
+			if( flag == 1 ){
+				st = righe_trovate;
+			}
 			#pragma omp parallel for private(i,inv,s,k,a)		
-			for( i = righe_trovate; i < row; i++ ){
+			for( i = st; i < row; i++ ){
 				if( m[i][pivot_colonna] != 0 ){
 					inv = invers(m[pivot_riga][pivot_colonna],module);		//inverso dell´ elemento in m[r][pivot_colonna]
 					s = mul_mod(inv,m[i][pivot_colonna],module);						
