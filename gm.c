@@ -78,11 +78,13 @@ int main (void){
 	allocation(&m,&row,&col,&num_var,&v,&n,&module,&max_degree);  //alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
 	d_row = &row;
 
+
 	if( order(&ord,n) != 0 ){
 		printf("Ordinamento insesistente!!!\n\nTERMINAZIONE PROGRAMMA");
 		return 0;
 	}
 
+	printf("Massimo numero di monomi %d\n", col);
 
 	int degree[max_degree+1];
 	len = col;
@@ -106,9 +108,11 @@ int main (void){
 	printf("\nMappa creata in %f sec\n\n",omp_get_wtime()-start_map);	
 
 	//RISOLUZIONE PROBLEMA
+	double t0 = omp_get_wtime();
 	init_degree_vector(degree,num_var);                //inizializzazione vettore dei gradi dei polinomi
 	execute(&m,d_row,col,map,degree,vet,num_var);      //eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
-
+	double t1 = omp_get_wtime();
+	
 	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start);
 	print_matrix(m, row, col);	                       //stampa la matrice soluzione
 
@@ -116,6 +120,8 @@ int main (void){
 	matrix_free_long(&m,row,col);					   //deallocazione di tutti i puntatori utilizzati
 	matrix_free_int(&map,len,len);
 	matrix_free_int(&vet,len,num_var);
+
+	printf("\n%f\n", t1-t0);
 
 
 	return 0;
@@ -396,6 +402,8 @@ La terminazione è data da:
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
 		start = omp_get_wtime();	
+		
+		//gauss(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
 		gauss2(*m, *d_row, col, module, st);                                     //applico la riduzione di Gauss
 		
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
@@ -405,6 +413,7 @@ La terminazione è data da:
 
 		new = *d_row;
 		st = new;
+
 
 		if( old == new  ){ //se per due volte trovo una matrice con le stesso numero di righe mi fermo
 			flag = 1;
