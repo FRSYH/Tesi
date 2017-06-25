@@ -70,7 +70,7 @@ In caso di errore di formato nell'input la funzione si interrompe restituendo se
 
 	int *grade;
 
-	grade = calloc(3,sizeof(int));
+	grade = calloc(num_var,sizeof(int));
 
 	while( c != EOF ){
 
@@ -89,11 +89,12 @@ In caso di errore di formato nell'input la funzione si interrompe restituendo se
 			//inserire monomio in posizione corretta
 			col = (int **)(bsearch_r((void *) &grade, (void *) vet_grd, len, (sizeof(int*)), ord, &num_var)) - vet_grd;
 			m[pos_pol][col] = cof;
+		
 			if(c=='\n'){
 				pos_pol++;
 			}
 			mon = calloc(i+1,sizeof(char));
-			grade = calloc(3,sizeof(int));
+			grade = calloc(num_var,sizeof(int));
 			c = getchar();
 		}
 		c = getchar();	
