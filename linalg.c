@@ -57,7 +57,8 @@ long long mul_mod(long long a, long long b, long long p){
 int monomial_combinations(int n, int m) {
 
 	// dichiarato double per compatibilità con il fattoriale della libreria gsl
-	int result = 0, num, den;
+	int result = 0;
+	long long num, den;
 	// result = Sommatoria (per j da 1 a m) {(j+n-1)! / j!*(n-1)!}
 	// semplificato a: Sommatoria (per j da 1 a m) {(j+n-1)*(j+n-2)* ... *(n) / j!}
 	for (int j = 1; j <= m; j++) {
@@ -65,7 +66,7 @@ int monomial_combinations(int n, int m) {
 		for (int k = j; k > 0 ; k--)
 			num = num * (n+k-1);
 		den = factorial(j);
-		result += (num / den);
+		result += (int)(num / den);
 	}
 	return  result;
 }
@@ -95,6 +96,7 @@ void gauss2(long long **m, int row, int col, int module, int start){
 	int pivot_riga = 0,r = 0,righe_trovate = 0,i,k;
 	long long s,inv,a;
 	int st = start,flag=0;
+
 
 	for(int pivot_colonna = col-1; pivot_colonna >= 0; pivot_colonna-- ){
 		r = righe_trovate;
@@ -136,7 +138,7 @@ void riduzione(long long **m, int row, int col, int riga_pivot, int j, int modul
 	
 	int r,k;
 	long long s,inv,a;
-	//#pragma omp parallel for private(inv,s,k,a) shared (r,m)
+	#pragma omp parallel for private(inv,s,k,a) shared (r,m)
 	for( r=riga_pivot+1; r<row; r++ ){
 
 		if( m[r][j] != 0 ){
