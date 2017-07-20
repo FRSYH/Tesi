@@ -56,18 +56,29 @@ long long mul_mod(long long a, long long b, long long p){
 //restituisce il numero di tutti i possibili monomi con n variabili e grado <= m
 int monomial_combinations(int n, int m) {
 
-	// dichiarato double per compatibilità con il fattoriale della libreria gsl
 	int result = 0;
 	long long num, den;
 	// result = Sommatoria (per j da 1 a m) {(j+n-1)! / j!*(n-1)!}
-	// semplificato a: Sommatoria (per j da 1 a m) {(j+n-1)*(j+n-2)* ... *(n) / j!}
+	// se n>=j semplificato a: Sommatoria (per j da 1 a m) {(j+n-1)*(j+n-2)* ... *(n) / j!}
+	// se j>n semplificato a: Sommatoria (per j da 1 a m) {(j+n-1)*(j+n-2)* ... *(j) / (n-1)!}
+	
 	for (int j = 1; j <= m; j++) {
-		num = 1;
-		for (int k = j; k > 0 ; k--)
-			num = num * (n+k-1);
-		den = factorial(j);
-		result += (int)(num / den);
+		if (n >= j) {
+			num = 1;
+			for (int k = j; k > 0; k--)
+				num = num * (n+k-1);
+			den = factorial(j);
+		}
+		else {
+			num = 1;
+			for (int k = n; k > 1; k--)
+				num = num * (j+k-1);
+			den = factorial(n-1);
+		}
+		//cast implicito da longlong a int. result sarà sempre piccolo
+		result += (num / den);
 	}
+	
 	return  result;
 }
 
@@ -197,8 +208,8 @@ int grevlex_comparison(const void *monom1, const void *monom2, void *arg) {
 
 
 //calcola il fattoriale di n (se n è negativo return -1)
-int factorial(int n){
-	int k;
+long long factorial(int n){
+	long long k;
 
 	if (n<0) //se n è negativo non esiste il fattoriale
 	{

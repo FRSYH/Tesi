@@ -27,7 +27,7 @@ int monomial_combinations(int n, int m);
 int grevlex_comparison(const void *mon1, const void *mon2, void *arg);
 
 //calcola il fattoriale di n
-int factorial(int n);
+long long factorial(int n);
 
 //mancante nella stdlib, controparte di qsort_r
 void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,

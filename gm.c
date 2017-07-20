@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <omp.h>
+#include <stdbool.h>
 #include "linalg.h"
 #include "matrix.h"
 #include "scan.h"
@@ -50,8 +51,6 @@ void matrix_degree(long long **m, int row, int col, int *m_deg, int **vet, int n
 //formatted print of matrix degree
 void print_matrix_degree(int *m_deg);
 
-//execute the multiplication, gauss reduction, elimination null_rows and compare the result to target
-void execute(long long ***m, int *d_row, int col, int **map, int *degree, int **vet, int num_var);
 
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
@@ -62,9 +61,45 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 void eliminate_linear_dependent_rows(long long ***m_test, int *row, int col, long long **m_before, int row_b, int col_b);
 
 
-int main (void){
+int main (int argc, char *argv[]){
 	
-	double start = omp_get_wtime(),start_map,prec = omp_get_wtime();
+	//parsing delle opzioni
+	bool input_file_flag, verbose_flag, help_flag, version_flag, test_flag;
+	input_file_flag = verbose_flag = help_flag = version_flag = test_flag = false;
+	
+	int parsed = 1;
+	
+	while (parsed < argc) {
+			if (!strcmp(argv[parsed], "--verbose")) {
+				verbose_flag = true;
+				parsed++;
+			}
+			else if (!strcmp(argv[parsed], "--help")) {
+				help_flag = true;
+				parsed++;
+			}
+			else if (!strcmp(argv[parsed], "--version")) {
+				version_flag = true;
+				parsed++;
+			}
+			else if (!strcmp(argv[parsed], "--test")) {
+				test_flag = true;
+				parsed++;
+			}
+	}
+	
+	if (help_flag) {
+		printf("Per istruzioni sull'utilizzo --> https://github.com/FRSYH/Tesi\n");
+		return 0;
+	}
+	
+	if (version_flag) {
+		printf("Versione Alfa\n");
+		return 0;
+	}
+
+	//inizio
+	double start_time = omp_get_wtime(), stopwatch;
 
 	int row, col, num_var,n;
 	int *d_row,**vet, len, **map;
@@ -74,55 +109,125 @@ int main (void){
 	int (*ord) (const void *, const void *, void*);
 
 
-	
-	allocation(&m,&row,&col,&num_var,&v,&n,&module,&max_degree);  //alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
+	//alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
+	allocation(&m,&row,&col,&num_var,&v,&n,&module,&max_degree);
 	d_row = &row;
-
 
 	if( order(&ord,n) != 0 ){
 		printf("Ordinamento insesistente!!!\n\nTERMINAZIONE PROGRAMMA");
 		return 0;
 	}
 
-	printf("Massimo numero di monomi %d\n", col);
 
 	int degree[max_degree+1];
 	len = col;
 
-	vet = monomial_computation(num_var, max_degree, len); 
 	//crea il vettore con tutti i possibili monomi avendo num_var varaibili e max_degree come massimo grado
+	vet = monomial_computation(num_var, max_degree, len); 
 
 
-	qsort_r(vet, len, sizeof(int*), ord, &num_var); 
 	//ordina il vettore dei monomi secondo un determinato ordinamento, ordinamento intercambiabile
-
-	if( init_matrix(m,row,col,vet,v,num_var,ord) == -1 ){ //inizializzazione matrice (lettura dati input)
+	qsort_r(vet, len, sizeof(int*), ord, &num_var);
+	
+	//inizializzazione matrice (lettura dati input)
+	if( init_matrix(m,row,col,vet,v,num_var,ord) == -1 ){
 		printf("Errore di input !!!\n\nTERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
 		return 0;
 	}
 
-	printf("\nInizializzazione in %f sec\n",omp_get_wtime()-prec); 
-	start_map = omp_get_wtime();
-	matrix_alloc_int(&map,len,len);                    //allocazione matrice che mappa le posizioni dei prodotti dei monomi
-	setup_map(map, vet, len, num_var, max_degree,ord);     //creazione della mappa
-	printf("\nMappa creata in %f sec\n\n",omp_get_wtime()-start_map);	
+	printf("\nInizializzazione in %f sec\n",omp_get_wtime()-start_time); 
+	stopwatch = omp_get_wtime();
+	//allocazione matrice che mappa le posizioni dei prodotti dei monomi
+	matrix_alloc_int(&map,len,len);
+	//creazione della mappa
+	setup_map(map, vet, len, num_var, max_degree,ord);
+	printf("\nMappa creata in %f sec\n\n",omp_get_wtime()-stopwatch);	
 
 	//RISOLUZIONE PROBLEMA
+	
+	//testing
 	double t0 = omp_get_wtime();
-	init_degree_vector(degree,num_var);                //inizializzazione vettore dei gradi dei polinomi
-	execute(&m,d_row,col,map,degree,vet,num_var);      //eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
+	
+	//inizializzazione vettore dei gradi dei polinomi
+	init_degree_vector(degree,num_var);
+	
+	
+	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
+
+	int *m_deg = calloc(max_degree+1, sizeof(int));
+	printf("Inizio computazione\n");
+	matrix_degree(m,*d_row,col,m_deg,vet,num_var);
+
+	int flag,old,new;
+	flag = old = new = 0;
+	old = *d_row;
+	
+	int st = 0;
+
+	while( flag != 1 ){
+
+		printf("\n -Eseguo moltiplicazione, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();
+		
+		//moltiplico la matrice per tutti i monomi possibili
+		moltiplica_matrice(&m,d_row,col,map,degree,vet,num_var);
+		
+		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+
+		printf("\n -Eseguo Gauss, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();	
+		
+		//applico la riduzione di Gauss
+		gauss2(m, *d_row, col, module, st);
+		//elimino le righe nulle della matrice
+		eliminate_null_rows(&m,d_row,col);
+		
+		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-stopwatch);
+  		matrix_degree(m,*d_row,col,m_deg,vet,num_var);
+		print_matrix_degree(m_deg);
+
+		new = *d_row;
+		st = new;
+
+		//se per due volte trovo una matrice con le stesso numero di righe mi fermo
+		if( old == new  )
+			flag = 1;
+		else
+			if( target_degree(m_deg) == 0 )
+				flag = 1;
+			else{
+				old = new;
+				//verbose
+				if (verbose_flag) {
+					printf("\nMatrice intermedia:\n\n");
+					print_matrix(m, *d_row, col);
+				}
+			}
+
+	}
+	free(m_deg);
+
+	//finito algoritmo moltiplicazione e riduzione
+
+
+	//testing
 	double t1 = omp_get_wtime();
 	
-	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start);
-	print_matrix(m, row, col);	                       //stampa la matrice soluzione
+	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
+	
+	//stampa la matrice soluzione
+	print_matrix(m, row, col);
 
 
-	matrix_free_long(&m,row,col);					   //deallocazione di tutti i puntatori utilizzati
+	//deallocazione di tutti i puntatori utilizzati
+	matrix_free_long(&m,row,col);
 	matrix_free_int(&map,len,len);
 	matrix_free_int(&vet,len,num_var);
 
-	printf("\n%f\n", t1-t0);
-
+	//testing
+	if (test_flag) {printf("\n%f\n", t1-t0);}
 
 	return 0;
 }
@@ -368,66 +473,6 @@ void print_matrix_degree(int *m_deg){
 }
 
 
-
-
-void execute(long long ***m, int *d_row, int col, int **map, int *degree, int **vet, int num_var){
-/*
-Questa funzione itera la procedura di moltiplicazione della matrice e la riduzione di Gauss fino a che non si raggiunge la terminazione.
-La terminazione è data da:
-	- raggiunta dei gradi {1,2,3,4,...,max_degree}
-	- iterazione infinita, non c'è soluzione con gradi completi
-
-*/
-	double start;
-	int *m_deg = calloc(max_degree+1, sizeof(int));
-	printf("Inizio computazione\n");
-	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
-
-	int flag,old,new;
-	flag = old = new = 0;
-	old = *d_row;
-	
-	int st = 0;
-
-	while( flag != 1 ){
-
-		printf("\n -Eseguo moltiplicazione, ");
-		fflush(stdout);
-		start = omp_get_wtime();	
-		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);  //moltiplico la matrice per tutti i monomi possibili
-		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-start);
-		
-		//print_matrix(*m,*d_row,col);
-
-		printf("\n -Eseguo Gauss, ");
-		fflush(stdout);
-		start = omp_get_wtime();	
-		
-		//gauss(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
-		gauss2(*m, *d_row, col, module, st);                                     //applico la riduzione di Gauss
-		
-		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
-		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-start);
-  		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
-		print_matrix_degree(m_deg);
-
-		new = *d_row;
-		st = new;
-
-
-		if( old == new  ){ //se per due volte trovo una matrice con le stesso numero di righe mi fermo
-			flag = 1;
-		}else{
-			if( target_degree(m_deg) == 0 ){  //se trovo una matrice con gradi [1,2,3...,max_degree] mi fermo
-				flag = 1;
-			}else{
-				old = new; 
-			}			
-		}
-
-	}
-	free(m_deg);
-}
 
 
 int target_degree(int *v){
