@@ -16,7 +16,7 @@ tot=0
 
 for i in $(seq 1 $nTest)
 do
-	t=$(./gm < input.txt | tail -n1)
+	t=$(./gm --test < input.txt | tail -n1)
 	tot=$(echo $tot+$t | bc -l)
 done
 

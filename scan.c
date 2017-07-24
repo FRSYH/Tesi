@@ -41,7 +41,7 @@ con queste informazioni alloca la matrice principale (matrice che conterrà i po
 		c = getchar();
 	}
 
-	*col = 1+monomial_combinations(*num_var, *max_degree);
+	*col = monomial_combinations(*num_var, *max_degree);
 
 	*m = malloc((*row) * sizeof (long long *) );            // allocazione della matrice dei coefficienti
 	if( *m != NULL )
@@ -70,7 +70,7 @@ In caso di errore di formato nell'input la funzione si interrompe restituendo se
 
 	int *grade;
 
-	grade = calloc(num_var,sizeof(int));
+	grade = calloc(3,sizeof(int));
 
 	while( c != EOF ){
 
@@ -89,12 +89,11 @@ In caso di errore di formato nell'input la funzione si interrompe restituendo se
 			//inserire monomio in posizione corretta
 			col = (int **)(bsearch_r((void *) &grade, (void *) vet_grd, len, (sizeof(int*)), ord, &num_var)) - vet_grd;
 			m[pos_pol][col] = cof;
-		
 			if(c=='\n'){
 				pos_pol++;
 			}
 			mon = calloc(i+1,sizeof(char));
-			grade = calloc(num_var,sizeof(int));
+			grade = calloc(3,sizeof(int));
 			c = getchar();
 		}
 		c = getchar();	

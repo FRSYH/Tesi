@@ -30,4 +30,13 @@ void eliminate_null_rows(long long ***m, int *row, int col);
 
 void append_matrix(long long ***m1, int *row1, int col1, long long **m2, int row2, int col2);
 
+
+//funzione di confronto tra la righa rowA con rowB, scorrendo le colonne da destra a sinistra
+//restituisce 1 se rowA > rowB, -1 se rowB > rowA, 0 altrimenti. Compatibile con qsort_r
+int compare_rows(const void *rowA, const void *rowB, void *columns);
+
+//tolgo da m2 le righe iniziali uguali a m1
+void eliminate_equal_rows(long long **m1, int row1, long long ***m2, int *row2, int col);
+
+
 #endif //MATRIX_H_

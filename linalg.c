@@ -57,28 +57,9 @@ long long mul_mod(long long a, long long b, long long p){
 int monomial_combinations(int n, int m) {
 
 	int result = 0;
-	long long num, den;
-	// result = Sommatoria (per j da 1 a m) {(j+n-1)! / j!*(n-1)!}
-	// se n>=j semplificato a: Sommatoria (per j da 1 a m) {(j+n-1)*(j+n-2)* ... *(n) / j!}
-	// se j>n semplificato a: Sommatoria (per j da 1 a m) {(j+n-1)*(j+n-2)* ... *(j) / (n-1)!}
-	
-	for (int j = 1; j <= m; j++) {
-		if (n >= j) {
-			num = 1;
-			for (int k = j; k > 0; k--)
-				num = num * (n+k-1);
-			den = factorial(j);
-		}
-		else {
-			num = 1;
-			for (int k = n; k > 1; k--)
-				num = num * (j+k-1);
-			den = factorial(n-1);
-		}
-		//cast implicito da longlong a int. result sarà sempre piccolo
-		result += (num / den);
-	}
-	
+	//result = Sommatoria (per j da 1 a m) {(j+n-1)! / j!*(n-1)!}
+	for (int j = 0; j <= m; j++)
+		result += combination(n, j);
 	return  result;
 }
 
@@ -170,7 +151,7 @@ void riduzione(long long **m, int row, int col, int riga_pivot, int j, int modul
 //confronta due monomi di *arg variabili secondo l'ordinamento grevlex
 //restituisce un intero positivo se monom1 > monom2, zero se sono uguali, uno negativo altrimenti
 //i monomi sono sempre rappresentati come array di lunghezza pari al numero delle variabili
-//sono fatti diversi cast perchè il tipo degli argomenti è compatibile con qsort_r
+//sono fatti diversi cast perchè il tipo degli argomenti sia compatibile con qsort_r
 int grevlex_comparison(const void *monom1, const void *monom2, void *arg) {
 
 	int degree1 = 0, degree2 = 0, n, *mon1, *mon2;
@@ -229,12 +210,27 @@ long long factorial(int n){
 }
 
 
-int combination(int n, int k){
-	int a,b,c;
-	a = factorial(n+k-1);
-	b = factorial(k);
-	c = factorial((n+k-1)-k);
-	return  a/(c*b);
+//restituisce il numero di possibili monomi con n variabili e grad = m
+int combination(int n, int m){
+
+	long long num, den;
+	//calcolo {(m+n-1)! / m!*(n-1)!}
+
+	//se n>=m semplificato a {(j+n-1)*(j+n-2)* ... *(n) / j!}
+	if (n >= m) {
+		num = 1;
+		for (int k = m; k > 0; k--)
+			num = num * (n+k-1);
+		den = factorial(m);
+	}
+	//se m>n semplificato a {(j+n-1)*(j+n-2)* ... *(j) / (n-1)!}
+	else {
+		num = 1;
+		for (int k = n; k > 1; k--)
+			num = num * (m+k-1);
+		den = factorial(n-1);
+	}
+	return (num/den);		
 }
 
 //https://git.devuan.org/jaretcantu/eudev/commit/a9e12476ed32256690eb801099c41526834b6390

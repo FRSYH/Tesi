@@ -67,25 +67,16 @@ int main (int argc, char *argv[]){
 	bool input_file_flag, verbose_flag, help_flag, version_flag, test_flag;
 	input_file_flag = verbose_flag = help_flag = version_flag = test_flag = false;
 	
-	int parsed = 1;
 	
-	while (parsed < argc) {
-			if (!strcmp(argv[parsed], "--verbose")) {
+	for (int parsed = 1; parsed < argc; parsed++) {
+			if (!strcmp(argv[parsed], "--verbose"))
 				verbose_flag = true;
-				parsed++;
-			}
-			else if (!strcmp(argv[parsed], "--help")) {
+			else if (!strcmp(argv[parsed], "--help"))
 				help_flag = true;
-				parsed++;
-			}
-			else if (!strcmp(argv[parsed], "--version")) {
+			else if (!strcmp(argv[parsed], "--version"))
 				version_flag = true;
-				parsed++;
-			}
-			else if (!strcmp(argv[parsed], "--test")) {
+			else if (!strcmp(argv[parsed], "--test"))
 				test_flag = true;
-				parsed++;
-			}
 	}
 	
 	if (help_flag) {

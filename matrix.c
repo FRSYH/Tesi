@@ -148,3 +148,47 @@ void append_matrix(long long ***m1, int *row1, int col1, long long **m2, int row
 		}
 	}
 }
+
+
+//funzione di confronto tra la righa rowA con rowB, scorrendo le colonne da destra a sinistra
+//restituisce 1 se rowA > rowB, -1 se rowB > rowA, 0 altrimenti. Compatibile con qsort_r
+int compare_rows(const void *rowA, const void *rowB, void *columns) {
+
+	long long *row1, *row2;
+	int col;
+	
+	col = *((int *) columns);
+	row1 = *((long long **) rowA);
+	row2 = *((long long **) rowB);
+	
+	for (int i = col-1; i >= 0; i--) {
+		if (row1[i] > row2[i])
+			return 1;
+		else if (row1[i] < row2[i])
+			return -1;
+	}
+	
+	return 0;
+}
+
+
+//tolgo da m2 le righe iniziali uguali a m1
+void eliminate_equal_rows(long long **m1, int row1, long long ***m2, int *row2, int col) {
+		
+		int eliminated_rows = 0;
+		
+		//per ogni riga consecuitiva in m1 uguale a quella in m2
+		while (eliminated_rows < row1 && !compare_rows(&m1[eliminated_rows], &(*m2)[eliminated_rows], &col))
+			eliminated_rows++;
+			
+		
+		//elimino le righe iniziali uguali trovate
+		for (int i = 0; i < eliminated_rows; i++)
+			free((*m2)[i]);
+		
+		//faccio iniziare m2 da dopo le righe eliminate e aggiorno il numero di righe
+		*m2 = &((*m2)[eliminated_rows]);
+		*row2 = *row2 - eliminated_rows;
+		return;
+}
+
