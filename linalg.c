@@ -2,6 +2,8 @@
 #include "matrix.h"
 #include "linalg.h"
 #include <stdio.h>
+#include <math.h>
+#include <gmp.h>
 //n mod p 
 //Riduzione di n in modulo p.
 long long mod(long long n, long long p){
@@ -59,7 +61,7 @@ int monomial_combinations(int n, int m) {
 	int result = 0;
 	//result = Sommatoria (per j da 1 a m) {(j+n-1)! / j!*(n-1)!}
 	for (int j = 0; j <= m; j++)
-		result += combination(n, j);
+		result += gmp_combination(n, j);
 	return  result;
 }
 
@@ -209,8 +211,30 @@ long long factorial(int n){
 	}
 }
 
+void gmp_factorial(mpz_t result, int n){
 
-//restituisce il numero di possibili monomi con n variabili e grad = m
+	mpz_t x;
+	mpz_init(x);
+	if (n<0) //se n è negativo non esiste il fattoriale
+	{
+		mpz_set_si(result,-1);
+
+	}else{ //altrimenti calcolo il fattoriale
+
+		if( n==0 || n==1 ){
+			mpz_set_si(result,1);
+		}else{
+			
+			mpz_set_si(result,1);
+			for (int i = 2; i <= n; i++){
+				mpz_set_si(x,i);
+				mpz_mul(result,result,x);
+			}
+		}
+	}
+} 
+
+//restituisce il numero di possibili monomi con n variabili e grado = m
 int combination(int n, int m){
 
 	long long num, den;
@@ -232,6 +256,53 @@ int combination(int n, int m){
 	}
 	return (num/den);		
 }
+
+//restituisce il numero di possibili monomi con n variabili e grado = m
+int gmp_combination(int n, int m){
+
+	mpz_t num, den, x, result;
+	mpz_init(num);
+	mpz_init(den);
+	mpz_init(x);
+	mpz_init(result);
+	
+	//calcolo {(m+n-1)! / m!*(n-1)!}
+
+	//se n>=m semplificato a {(j+n-1)*(j+n-2)* ... *(n) / j!}
+	if (n >= m) {
+		
+		mpz_set_ui(num,1); 
+		for (int k = m; k > 0; k--){
+			mpz_set_si(x,n+k-1);	
+			mpz_mul(num,num,x);
+		}	
+		
+		gmp_factorial(den,m);
+	}
+	//se m>n semplificato a {(j+n-1)*(j+n-2)* ... *(j) / (n-1)!}
+	else {
+		mpz_set_ui(num,1);
+		for (int k = n; k > 1; k--){
+			mpz_set_si(x,m+k-1);	
+			mpz_mul(num,num,x);			
+		}
+		
+		gmp_factorial(den,n-1);
+	}
+	
+	mpz_divexact(result,num,den);	// result = num/den
+	if( mpz_fits_sint_p(result) != 0 ){
+		int r = 0;
+		mpz_export(&r, 0, -1, sizeof result, 0, 0, result);
+		return r;
+		//printf("Trovato risultato che entra in int: %d\n", r);
+
+	}else{
+		printf("Overflow gmp_combination\n");
+		return 0;
+	}
+}
+
 
 //https://git.devuan.org/jaretcantu/eudev/commit/a9e12476ed32256690eb801099c41526834b6390
 //mancante nella stdlib, controparte di qsort_r

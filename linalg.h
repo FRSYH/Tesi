@@ -1,5 +1,6 @@
 #ifndef LINALG_H_  /* Include guard */
 #define LINALG_H_
+#include <gmp.h>
 
 //n mod p
 long long mod(long long n, long long p);
@@ -27,6 +28,9 @@ void riduzione(long long **m, int row, int col, int riga_pivot, int j, int modul
 //restituisce il numero di possibili monomi con n variabili e grad = m
 int combination(int n, int m);
 
+//restituisce il numero di possibili monomi con n variabili e grad = m
+int gmp_combination(int n, int m);
+
 //restituisce il numero di tutti i possibili monomi con n variabili e grado <=m
 int monomial_combinations(int n, int m); 
 
@@ -36,6 +40,9 @@ int grevlex_comparison(const void *mon1, const void *mon2, void *arg);
 
 //calcola il fattoriale di n
 long long factorial(int n);
+
+//calcola il fattoriale di n
+void gmp_factorial(mpz_t result, int n);
 
 //mancante nella stdlib, controparte di qsort_r
 void *bsearch_r(const void *key, const void *base, size_t nmemb, size_t size,
