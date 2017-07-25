@@ -146,6 +146,7 @@ int main (int argc, char *argv[]){
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 
 	int *m_deg = calloc(max_degree+1, sizeof(int));
+
 	printf("Inizio computazione\n");
 	matrix_degree(m,*d_row,col,m_deg,vet,num_var);
 
