@@ -89,6 +89,7 @@ int main (int argc, char *argv[]){
 		return 0;
 	}
 
+
 	//inizio
 	double start_time = omp_get_wtime(), stopwatch;
 
