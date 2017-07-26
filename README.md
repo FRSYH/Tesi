@@ -41,9 +41,10 @@ ISTRUZIONI PER COMPILAZIONE ED ESECUZIONE PROGRAMMA
 
 Tutto il programma è contenuto nel file gm.c 
 Il programma deve essere eseguito su sistemi Unix (su windows manca una metodo delle librerie standard di C).
+E necessaria la libreria GMP per far funzionare il programma. -> https://gmplib.org/
 
 Per compilare il programma.
->gcc gm.c -fopenmp linalg.c matrix.c scan.c -l gomp -o gm
+>gcc gm.c -fopenmp linalg.c matrix.c scan.c -l gomp -lgmp -o gm
 
 Il programma necessita di dati di input, per comodità si consiglia di utilizzare un file di input.
 
@@ -51,11 +52,14 @@ Per eseguire il programma occorre fornire i dati di input (esempio di file di in
 - modulo dei coefficienti
 - grado massimo raggiungibile
 - numero polinomi di partenza
-- tipo di ordinamento  <-- NEW!!!
+- tipo di ordinamento
 - elenco delle variabili utilizzate nei polinomi (su una sola riga in ordine alfabetico)
 - elenco di polinomi (uno per riga, con il formato utilizzato da Magma, esempio nel file)
 >./gm < input.txt > output.txt
 
+opzioni:
+--verbose per stampa matrici nei passi intermedi
+--test per stampa di info di test
 
 N.B. se l'input è in un formato scorretto il programma abortirà la computazione.
 
