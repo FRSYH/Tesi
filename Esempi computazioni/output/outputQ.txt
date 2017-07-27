@@ -1,0 +1,6 @@
+
+Inizializzazione in 0.003785 sec
+
+Mappa creata in 0.962827 sec
+
+Inizio computazione

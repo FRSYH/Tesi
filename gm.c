@@ -158,7 +158,7 @@ int main (int argc, char *argv[]){
 	
 	int st = 0;
 
-	
+	return 0;
 
 	while( flag != 1 ){
 
