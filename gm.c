@@ -135,6 +135,7 @@ int main (int argc, char *argv[]){
 	setup_map(map, vet, len, num_var, max_degree,ord);
 	printf("\nMappa creata in %f sec\n\n",omp_get_wtime()-stopwatch);	
 
+
 	//RISOLUZIONE PROBLEMA
 	
 	//testing
@@ -157,6 +158,8 @@ int main (int argc, char *argv[]){
 	
 	int st = 0;
 
+	
+
 	while( flag != 1 ){
 
 		printf("\n -Eseguo moltiplicazione, ");
@@ -167,6 +170,7 @@ int main (int argc, char *argv[]){
 		moltiplica_matrice(&m,d_row,col,map,degree,vet,num_var);
 		
 		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+
 
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
@@ -183,6 +187,7 @@ int main (int argc, char *argv[]){
 
 		new = *d_row;
 		st = new;
+
 
 		//se per due volte trovo una matrice con le stesso numero di righe mi fermo
 		if( old == new  )
@@ -211,7 +216,7 @@ int main (int argc, char *argv[]){
 	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
 	
 	//stampa la matrice soluzione
-	print_matrix(m, row, col);
+	//print_matrix(m, row, col);
 
 
 	//deallocazione di tutti i puntatori utilizzati

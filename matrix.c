@@ -65,9 +65,13 @@ void eliminate_null_rows(long long ***m, int *row, int col){
 //Se non si esegue questa funzione dopo Gauss si possono eliminare righe non nulle.	
 
 	int null_row = null_rows(*m,*row,col);
+	int new_rows = *row - null_row;
 	if(null_row != 0){
-		*m = realloc( *m , (*row - null_row ) * sizeof (long long *));
-		*row = *row - null_row;
+		for(int i=new_rows; i < *row; i++){
+			free( (*m)[i] );
+		}
+		*m = realloc( *m , new_rows * sizeof (long long *));
+		*row = new_rows;
 	}
 }
 
