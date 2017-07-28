@@ -1,6 +1,12 @@
 
-Inizializzazione in 0.010090 sec
+Inizializzazione in 0.006096 sec
 
-Mappa creata in 1.427047 sec
+Mappa creata in 1.410926 sec
 
 Inizio computazione
+
+ -Eseguo moltiplicazione, numero righe: 4550     (0.045445 sec)
+ -Eseguo Gauss, numero righe: 4549               (0.166957 sec)
+Gradi della matrice = { 4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32 }
+
+ -Eseguo moltiplicazione, 

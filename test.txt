@@ -1,33 +1,21 @@
 
-Inizializzazione in 0.013930 sec
+Inizializzazione in 0.027466 sec
 
-Mappa creata in 0.101652 sec
+Mappa creata in 0.001952 sec
 
 Inizio computazione
 
- -Eseguo moltiplicazione, numero righe: 1374     (0.004748 sec)
- -Eseguo Gauss, numero righe: 1299               (0.132978 sec)
-Gradi della matrice = { 4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20 }
+ -Eseguo moltiplicazione, numero righe: 95     (0.000108 sec)
+ -Eseguo Gauss, numero righe: 92               (0.005537 sec)
+Gradi della matrice = { 3  4  5  6  7 }
 
- -Eseguo moltiplicazione, numero righe: 80682     (0.338145 sec)
- -Eseguo Gauss, numero righe: 1311               (6.790164 sec)
-Gradi della matrice = { 4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20 }
+ -Eseguo moltiplicazione, numero righe: 513     (0.000265 sec)
+ -Eseguo Gauss, numero righe: 110               (0.004122 sec)
+Gradi della matrice = { 3  4  5  6  7 }
 
- -Eseguo moltiplicazione, numero righe: 80802     (0.338863 sec)
- -Eseguo Gauss, numero righe: 1359               (9.446343 sec)
-Gradi della matrice = { 4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20 }
+ -Eseguo moltiplicazione, numero righe: 1008     (0.000277 sec)
+ -Eseguo Gauss, numero righe: 119               (0.018324 sec)
+Gradi della matrice = { 1  2  3  4  5  6  7 }
 
- -Eseguo moltiplicazione, numero righe: 82182     (0.344219 sec)
- -Eseguo Gauss, numero righe: 1527               (45.891286 sec)
-Gradi della matrice = { 4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20 }
-
- -Eseguo moltiplicazione, numero righe: 100551     (0.425811 sec)
- -Eseguo Gauss, numero righe: 1751               (224.337620 sec)
-Gradi della matrice = { 4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20 }
-
- -Eseguo moltiplicazione, numero righe: 204459     (0.768685 sec)
- -Eseguo Gauss, numero righe: 1770               (572.970131 sec)
-Gradi della matrice = { 1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20 }
-
-Target raggiunto, soluzione trovata in 861.923813 sec
+Target raggiunto, soluzione trovata in 0.058524 sec
 
