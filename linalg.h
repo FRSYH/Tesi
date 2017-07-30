@@ -1,6 +1,7 @@
 #ifndef LINALG_H_  /* Include guard */
 #define LINALG_H_
-#include <gmp.h>
+
+//#include <gmp.h>
 
 //n mod p
 long long mod(long long n, long long p);
