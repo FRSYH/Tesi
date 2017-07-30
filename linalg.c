@@ -2,8 +2,11 @@
 #include "matrix.h"
 #include "linalg.h"
 #include <stdio.h>
+/*
 #include <math.h>
 #include <gmp.h>
+*/
+
 //n mod p 
 //Riduzione di n in modulo p.
 long long mod(long long n, long long p){
@@ -61,7 +64,7 @@ int monomial_combinations(int n, int m) {
 	int result = 0;
 	//result = Sommatoria (per j da 1 a m) {(j+n-1)! / j!*(n-1)!}
 	for (int j = 0; j <= m; j++)
-		result += gmp_combination(n, j);
+		result += combination(n, j);
 	return  result;
 }
 
@@ -211,6 +214,7 @@ long long factorial(int n){
 	}
 }
 
+/*
 void gmp_factorial(mpz_t result, int n){
 
 	mpz_t x;
@@ -232,7 +236,8 @@ void gmp_factorial(mpz_t result, int n){
 			}
 		}
 	}
-} 
+}
+*/ 
 
 //restituisce il numero di possibili monomi con n variabili e grado = m
 int combination(int n, int m){
@@ -257,6 +262,8 @@ int combination(int n, int m){
 	return (num/den);		
 }
 
+
+/*
 //restituisce il numero di possibili monomi con n variabili e grado = m
 int gmp_combination(int n, int m){
 
@@ -302,7 +309,7 @@ int gmp_combination(int n, int m){
 		return 0;
 	}
 }
-
+*/
 
 //https://git.devuan.org/jaretcantu/eudev/commit/a9e12476ed32256690eb801099c41526834b6390
 //mancante nella stdlib, controparte di qsort_r
