@@ -70,7 +70,7 @@ int monomial_combinations(int n, int m) {
 
 //Calcola la riduzione di Gauss della matrice m (matrice di grandezza row e col).
 //La riduzione è calcolata sulla triangolare superiore sinistra.
-void gauss(long long **m, int row, int col, int modulo){
+void magma_gauss(long long **m, int row, int col, int modulo){
 	
 	int pivot_riga, pivot_colonna,righe_trovate,j;
 
@@ -88,19 +88,36 @@ void gauss(long long **m, int row, int col, int modulo){
 	}
 }
 
-void gauss2(long long **m, int row, int col, int module, int start){
+
+/*  effettua la riduzione di gauss della matrice m in place
+    parametro start viene utilizzato per ottimizzare l'agloritmo:
+	- 0 effettua la normale riduzione di gauss
+	- n (con n > 0) effettua una riduzione ottimizzata saltando le prime n righe nella fase di riduzione delle righe sottostanti.
+
+	Questa ottimizzazione è possibile solo se le prime n righe sono risultato di una riduzione di gauss precedente, quindi risulta inutile ripetere l'operazione di riduzione su queste righe.
+	Il salto delle prime n righe avviene solo se nella corrente riduzione non si è effettuato swap di righe. Quando le righe trovate superano start si ritorna alla normale riduzione.
+	
+
+*/
+void gauss(long long **m, int row, int col, int module, int start){
 	
 	int pivot_riga = 0,r = 0,righe_trovate = 0,i,k;
 	long long s,inv,a;
-	int st = start,flag=0;
+	int st,flag=0;
 
+	if( start == 0 ){
+		flag = 1;
+	}else{
+		st = start;
+	}
 
 	for(int pivot_colonna = col-1; pivot_colonna >= 0; pivot_colonna-- ){
 		r = righe_trovate;
-
 		while( r < row && m[r][pivot_colonna] == 0 ){
 			r++;
+			
 		}
+
 		// ho trovato la prima riga con elemento non nullo in posizione r e pivot_colonna oppure non esiste nessuna riga con elemento non nullo in posizione pivot_colonna
 		if( r < row ){ //significa che ho trovato un valore non nullo
 			if( r != righe_trovate ){
@@ -109,9 +126,17 @@ void gauss2(long long **m, int row, int col, int module, int start){
 			}			
 			pivot_riga = righe_trovate;
 			righe_trovate++;
-			if( flag == 1 ){
+
+			if( flag == 1 ){  			//riprendo la normale riduzione di gauss
 				st = righe_trovate;
+			}else{
+
+				if( st < righe_trovate ){  //se sono nella modalitá ottimizzazione e supero le prime n righe allora ritorno alla normale riduzione
+					flag = 1;
+					st = righe_trovate;
+				}
 			}
+
 			#pragma omp parallel for private(i,inv,s,k,a)		
 			for( i = st; i < row; i++ ){
 				if( m[i][pivot_colonna] != 0 ){
@@ -135,7 +160,7 @@ void riduzione(long long **m, int row, int col, int riga_pivot, int j, int modul
 	
 	int r,k;
 	long long s,inv,a;
-	#pragma omp parallel for private(inv,s,k,a) shared (r,m)
+	#pragma omp parallel for private(inv,s,k,a)
 	for( r=riga_pivot+1; r<row; r++ ){
 
 		if( m[r][j] != 0 ){

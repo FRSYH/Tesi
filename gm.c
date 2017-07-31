@@ -176,7 +176,9 @@ int main (int argc, char *argv[]){
 		stopwatch = omp_get_wtime();	
 		
 		//applico la riduzione di Gauss
-		gauss2(m, *d_row, col, module, st);
+		gauss(m, *d_row, col, module, st);
+		//magma_gauss(m, *d_row, col, module);
+		
 		//elimino le righe nulle della matrice
 		eliminate_null_rows(&m,d_row,col);
 		
@@ -204,6 +206,8 @@ int main (int argc, char *argv[]){
 			}
 
 	}
+
+
 	free(m_deg);
 
 	//finito algoritmo moltiplicazione e riduzione
@@ -215,7 +219,9 @@ int main (int argc, char *argv[]){
 	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
 	
 	//stampa la matrice soluzione
-	//print_matrix(m, row, col);
+	print_matrix(m, row, col);
+
+
 
 
 	//deallocazione di tutti i puntatori utilizzati
@@ -514,7 +520,7 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 	flag = old = new = 0;
 	old = *d_row;
 	
-	gauss(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
+	magma_gauss(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
 	eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
 	printf("righe di partenza: %d\n\n", *d_row);
 
@@ -540,7 +546,7 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var);     //moltiplico la matrice per tutti i monomi possibili
 		printf("righe trovate: %d\n", *d_row);
 		printf("Eseguo Gauss, ");
-		gauss(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
+		magma_gauss(*m, *d_row, col, module);                                     //applico la riduzione di Gauss
 		eliminate_null_rows(m,d_row,col);							//elimino le righe nulle della matrice
 		printf("righe trovate: %d\n", *d_row);
 		new = *d_row;
@@ -551,7 +557,7 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 
 		append_matrix(&m_recomposition,&row_b,col_b,*m,*d_row,col);             //matrice composta dalle sole righe indipendenti trovate
 		
-		gauss(m_recomposition, row_b, col, module);           
+		magma_gauss(m_recomposition, row_b, col, module);           
 		eliminate_null_rows(&m_recomposition,&row_b,col);
 		printf("righe trovate: %d\n\n", row_b);
 
@@ -591,7 +597,7 @@ void eliminate_linear_dependent_rows(long long ***m_test, int *row, int col, lon
 	for(i=0; i<rows; i++){  //ciclo per tutte le righe della matrice m
 
 		add_row_to_matrix(&m3,&d_row,col_b,(*m_test)[i]);   //aggiungo alla matrice m3 l'i-esima riga della matrice m
-		gauss(m3, d_row, col_b, module); 							//eseguo gauss su m3
+		magma_gauss(m3, d_row, col_b, module); 							//eseguo gauss su m3
 		eliminate_null_rows(&m3,&d_row,col);				//elimino le eventuali righe nulle
 		if( d_row == row_b ){       //se il numero delle righe di m3 dopo la riduzione di gauss è uguale a quello della matrice m_before significa che ho trovato una riga linearmente dipendente
 			//devo eliminare questa riga, --> sposto tutte le righe rimanenti in alto di una posizione

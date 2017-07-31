@@ -19,10 +19,10 @@ long long mul_mod(long long a, long long b, long long p);
 long long invers(long long n, long long p);
 
 // riduzione di gauss della matrice m
-void gauss(long long **m, int row, int col, int modulo);
+void magma_gauss(long long **m, int row, int col, int modulo);
 
 // riduzione di gauss della matrice m
-void gauss2(long long **m, int row, int col, int modulo, int start);
+void gauss(long long **m, int row, int col, int modulo, int start);
 
 void riduzione(long long **m, int row, int col, int riga_pivot, int j, int module);
 
