@@ -156,29 +156,50 @@ int main (int argc, char *argv[]){
 	flag = old = new = 0;
 	old = *d_row;
 
-	int st = 0;
+	int st = 0,vlen;
 
 	inv = 0;
+
+	int *v1,*v2;
+
+//------------------------------------------------------------
+
+	// la prima moltiplicazione viene eseguita su tutta la matrice di partenza.
+
+	printf("\n -Eseguo moltiplicazione, ");
+	fflush(stdout);
+	stopwatch = omp_get_wtime();
+
+	//moltiplico la matrice per tutti i monomi possibili
+	moltiplica_matrice(&m,d_row,col,map,degree,vet,num_var,inv);
+	printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
 
 
 	while( flag != 1 ){
 
-		printf("\n -Eseguo moltiplicazione, ");
-		fflush(stdout);
-		stopwatch = omp_get_wtime();
 
-		//moltiplico la matrice per tutti i monomi possibili
-		moltiplica_matrice(&m,d_row,col,map,degree,vet,num_var,inv);
+//-------------------------------------------------------------------------------------------
+		// calcolo la posizone dell'ultimo elemento di ogni riga della matrice prima di effettuare gauss	
 
-		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+		v1 = calloc( row , sizeof( int ) );
+		for( int i = 0; i < row; i++ ){
+			for( int j = col-1; j>=0; j--){
+				if( m[i][j] != 0 ){
+					v1[i] = j;
+					break;	
+				}	
+			}
+		}
 
+		//passo il vettore appena calcolato alla procedura di gauss per invertire le righe in modo analogo a quanto avviene nella riduzione
 
+//-------------------------------------------------------------------------------------------
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
 		stopwatch = omp_get_wtime();
 
 		//applico la riduzione di Gauss
-		inv = gauss(m, *d_row, col, module, st);
+		inv = gauss(m, *d_row, col, module, st,v1);
 		//magma_gauss(m, *d_row, col, module);
 
 		//elimino le righe nulle della matrice
@@ -191,13 +212,30 @@ int main (int argc, char *argv[]){
 		new = *d_row;
 		st = new;
 
+//-----------------------------------------------------------
+		// ricalcolo la posizione dell'ultimo elemento di ogni riga dopo aver effettuato gauss
+			
+		v2 = calloc( row , sizeof( int ) );
+		for( int i = 0; i < row; i++ ){
+			for( int j = col-1; j>=0; j--){
+				if( m[i][j] != 0 ){
+					v2[i] = j;
+					break;	
+				}	
+			}
+		}
 
-		//se per due volte trovo una matrice con le stesso numero di righe mi fermo
-		if( old == new  )
+//----------------------------------------------------------
+		// controllo le condizioni di uscita
+
+		if( old == new  ){
 			flag = 1;
-		else
-			if( target_degree(m_deg) == 0 )
+			break;
+		}else{
+			if( target_degree(m_deg) == 0 ){
 				flag = 1;
+				break;
+			}
 			else{
 				old = new;
 				//verbose
@@ -206,6 +244,29 @@ int main (int argc, char *argv[]){
 					print_matrix(m, *d_row, col);
 				}
 			}
+		}
+		
+		/*
+			A questo punto v1 contiene la posizione dell'ultimo elemento della riga i-esima prima di gauss e v2 i corrispettivi dopo gauss.
+			Confronto i due vettori e vado a moltiplicare solo le righe che sono state ridotte dalla procedura di gauss.
+		*/
+		
+		printf("\n -Eseguo moltiplicazione, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();
+
+		int length = row;
+		for(int i=0; i<length; i++){
+			if( v1[i] > v2[i] ){ 	//significa che la riga è stata ridotta
+				moltiplica_riga(&m,d_row,col,i,map,degree,vet,num_var);	//allora moltiplico tale riga
+			}
+		}
+
+		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+		
+		free(v2);
+		free(v1);
+
 
 	}
 

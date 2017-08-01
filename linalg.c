@@ -99,11 +99,11 @@ void magma_gauss(long long **m, int row, int col, int modulo){
 	
 
 */
-int gauss(long long **m, int row, int col, int module, int start){
+int gauss(long long **m, int row, int col, int module, int start, int *v){
 	
 	int pivot_riga = 0,r = 0,righe_trovate = 0,i,k;
 	long long s,inv,a;
-	int st,flag=0,invarianti=0,flag2=0;
+	int st,flag=0,invarianti=0,flag2=0,tmp;
 
 	if( start == 0 ){
 		flag = 1;
@@ -122,6 +122,9 @@ int gauss(long long **m, int row, int col, int module, int start){
 		if( r < row ){ //significa che ho trovato un valore non nullo
 			if( r != righe_trovate ){
 				swap_rows(m,row,col,righe_trovate,r); //sposto la riga appena trovata nella posizone corretta
+				tmp = v[righe_trovate];
+				v[righe_trovate] = v[r];
+				v[r] = tmp;
 				flag = 1;
 			}			
 			pivot_riga = righe_trovate;
