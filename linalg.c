@@ -99,11 +99,11 @@ void magma_gauss(long long **m, int row, int col, int modulo){
 	
 
 */
-void gauss(long long **m, int row, int col, int module, int start){
+int gauss(long long **m, int row, int col, int module, int start){
 	
 	int pivot_riga = 0,r = 0,righe_trovate = 0,i,k;
 	long long s,inv,a;
-	int st,flag=0;
+	int st,flag=0,invarianti=0,flag2=0;
 
 	if( start == 0 ){
 		flag = 1;
@@ -117,8 +117,8 @@ void gauss(long long **m, int row, int col, int module, int start){
 			r++;
 			
 		}
-
 		// ho trovato la prima riga con elemento non nullo in posizione r e pivot_colonna oppure non esiste nessuna riga con elemento non nullo in posizione pivot_colonna
+		
 		if( r < row ){ //significa che ho trovato un valore non nullo
 			if( r != righe_trovate ){
 				swap_rows(m,row,col,righe_trovate,r); //sposto la riga appena trovata nella posizone corretta
@@ -137,6 +137,12 @@ void gauss(long long **m, int row, int col, int module, int start){
 				}
 			}
 
+			if ( flag2 == 0 && flag == 1 )
+			{
+				flag2 = 1;
+				invarianti = righe_trovate;
+			}
+
 			#pragma omp parallel for private(i,inv,s,k,a)		
 			for( i = st; i < row; i++ ){
 				if( m[i][pivot_colonna] != 0 ){
@@ -152,6 +158,9 @@ void gauss(long long **m, int row, int col, int module, int start){
 			}
 		}
 	}
+
+	//printf("%d\n", invarianti-1);
+	return invarianti-1;
 }
 
 
