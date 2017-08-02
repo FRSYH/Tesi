@@ -35,8 +35,16 @@ void append_matrix(long long ***m1, int *row1, int col1, long long **m2, int row
 //restituisce 1 se rowA > rowB, -1 se rowB > rowA, 0 altrimenti. Compatibile con qsort_r
 int compare_rows(const void *rowA, const void *rowB, void *columns);
 
-//tolgo da m2 le righe iniziali uguali a m1
-void eliminate_equal_rows(long long **m1, int row1, long long ***m2, int *row2, int col);
+int compare_rows2(const void *rowA, const void *rowB, void *columns);
+
+//tolgo da m1 le righe iniziali uguali a m2
+void eliminate_equal_starting_rows(long long ***m1, int *row1, long long **m2, int row2, int col);
+
+//elimina da m la righa di indice index
+void delete_row(long long ***m, int *row, int col, int index);
+
+//elimina da m1 le righe uguali a quelle di m2
+void eliminate_equal_rows(long long ***m1, int *row1, long long **m2, int row2, int col);
 
 
 #endif //MATRIX_H_

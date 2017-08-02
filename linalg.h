@@ -22,7 +22,8 @@ long long invers(long long n, long long p);
 void magma_gauss(long long **m, int row, int col, int modulo);
 
 // riduzione di gauss della matrice m
-int gauss(long long **m, int row, int col, int modulo, int start, int *v);
+void gauss(long long **m, int row, int col, int modulo, int start, int *v);
+
 
 void riduzione(long long **m, int row, int col, int riga_pivot, int j, int module);
 

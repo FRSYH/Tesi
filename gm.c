@@ -60,6 +60,12 @@ void test(long long ***m, int *d_row, int col, int **map, int *degree, int **vet
 
 void eliminate_linear_dependent_rows(long long ***m_test, int *row, int col, long long **m_before, int row_b, int col_b);
 
+void execute_eliminazione(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var,bool verbose_flag);
+
+void execute_confronto(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var,bool verbose_flag);
+
+void execute_standard(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var,bool verbose_flag);
+
 
 int main (int argc, char *argv[]){
 
@@ -144,47 +150,173 @@ int main (int argc, char *argv[]){
 	//inizializzazione vettore dei gradi dei polinomi
 	init_degree_vector(degree,num_var);
 
+	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
+//----------------------------------------------------------------------------
+
+	//execute_confronto(&m,d_row,col,map,degree,vet,num_var,verbose_flag);
+	execute_eliminazione(&m,d_row,col,map,degree,vet,num_var,verbose_flag);
+	//execute_standard(&m,d_row,col,map,degree,vet,num_var,verbose_flag);
+//----------------------------------------------------------------------------
+
+	//testing
+	double t1 = omp_get_wtime();
+
+	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
+
+	//stampa la matrice soluzione
+	print_matrix(m, row, col);
+
+	//deallocazione di tutti i puntatori utilizzati
+	matrix_free_long(&m,row,col);
+	matrix_free_int(&map,len,len);
+	matrix_free_int(&vet,len,num_var);
+
+	//testing
+	if (test_flag) {printf("\n%f\n", t1-t0);}
+
+	return 0;
+}
+
+
+
+
+
+void execute_eliminazione(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag){
 
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
+	//non moltiplico le linee iniziali uguali a quelle dell'iterazione precedente
+	//tot = matrice totale su cui faccio gauss
+	//prev = matrice dell'iterazione precedente
+	//m = "now" = matrice che contiene le righe diverse tra tot e prev, che vanno moltiplicate
+	//	e aggiunte a tot prima di fare gauss
+	double start_time = omp_get_wtime(), stopwatch;
 
 	int *m_deg = calloc(max_degree+1, sizeof(int));
+	printf("Inizio computazione, metodo eliminazione\n");
+	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
-	printf("Inizio computazione\n");
-	matrix_degree(m,*d_row,col,m_deg,vet,num_var);
+	int flag,old,new;
+	flag = old = new = 0;
+	old = *d_row;
 
+	long long **prev = NULL;
+	int row_prev = 0, row_tot = *d_row;
+	long long **tot = NULL;
+	//tot = now
+	matrix_alloc_long(&tot, row_tot, col);
+	matrix_cpy(*m, row_tot, col, tot);
+
+	while( flag != 1 ){
+		//prev = tot, salvo la matrice della precedente iterazione
+		row_prev = row_tot;
+		matrix_alloc_long(&prev, row_prev, col);
+		matrix_cpy(tot, row_prev, col, prev);
+
+		//mult(now), moltiplico le linee diverse, nella prima iterazione
+		//non sono diverse, ma sono poche e non influisce sulle prestazioni
+		printf("\n -Eseguo moltiplicazione su m, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();
+		
+		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
+		
+		//tot = tot + now, faccio append a tot di now (linee moltiplicate)
+		append_matrix(&tot, &row_tot, col, *m, *d_row, col);
+		//non mi serve più now
+		matrix_free_long(m, *d_row, col);
+		printf("numero righe: %d     (%f sec)\n", *d_row, omp_get_wtime()-stopwatch);
+
+		
+		//gauss(tot), gauss su tot che ha anche le linee moltiplicate
+		printf(" -Eseguo Gauss su tot, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();	
+		
+		gauss(tot, row_tot, col, module, 0, NULL);
+		eliminate_null_rows(&tot, &row_tot, col);
+		printf("numero righe: %d              (%f sec)\n", row_tot ,omp_get_wtime()-stopwatch);
+		
+		//now = tot - prev, tolgo da tot le linee iniziali uguali a quelle
+		//dell'iterazione precedente e assegno il risultato a now
+		*d_row = row_tot;
+		matrix_alloc_long(m, *d_row, col);
+		matrix_cpy(tot, row_tot, col, *m);
+		eliminate_equal_starting_rows(m, d_row, prev, row_prev, col);
+		
+		
+		//degree(tot), aggiorno gradi/target
+  		matrix_degree(tot, row_tot,col,m_deg,vet,num_var);
+		print_matrix_degree(m_deg);
+		new = row_tot;
+		
+		matrix_free_long(&prev, row_prev, col);
+
+		//se per due volte trovo una matrice con le stesso numero di righe mi fermo
+		if( old == new  )
+			flag = 1;
+		else
+			if( target_degree(m_deg) == 0 )
+				flag = 1;
+			else{
+				old = new;
+				//verbose
+				if (verbose_flag) {
+					printf("\nMatrice intermedia:\n\n");
+					print_matrix(tot, row_tot, col);
+				}
+			}
+
+	}
+
+	matrix_free_long(m, *d_row, col);	
+	free(m_deg);
+	*m = tot;
+	*d_row = row_tot;
+}
+
+
+
+
+
+
+
+void execute_confronto(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag){
+
+	
 	int flag,old,new,inv;
 	flag = old = new = 0;
 	old = *d_row;
 
-	int st = 0,vlen;
-
-	inv = 0;
-
+	int st = inv = 0;
+	
 	int *v1,*v2;
 
-//------------------------------------------------------------
+	double start_time = omp_get_wtime(), stopwatch;
+
+	int *m_deg = calloc(max_degree+1, sizeof(int));
+	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
+
+	printf("Inizio computazione, metodo confronto\n");
+	//-------------------------------------------------------------------------------------------
 
 	// la prima moltiplicazione viene eseguita su tutta la matrice di partenza.
-
 	printf("\n -Eseguo moltiplicazione, ");
 	fflush(stdout);
 	stopwatch = omp_get_wtime();
 
 	//moltiplico la matrice per tutti i monomi possibili
-	moltiplica_matrice(&m,d_row,col,map,degree,vet,num_var,inv);
+	moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
 	printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
 
 
 	while( flag != 1 ){
-
-
 //-------------------------------------------------------------------------------------------
 		// calcolo la posizone dell'ultimo elemento di ogni riga della matrice prima di effettuare gauss	
 
-		v1 = calloc( row , sizeof( int ) );
-		for( int i = 0; i < row; i++ ){
+		v1 = calloc( *d_row , sizeof( int ) );
+		for( int i = 0; i < *d_row; i++ ){
 			for( int j = col-1; j>=0; j--){
-				if( m[i][j] != 0 ){
+				if( (*m)[i][j] != 0 ){
 					v1[i] = j;
 					break;	
 				}	
@@ -192,39 +324,36 @@ int main (int argc, char *argv[]){
 		}
 
 		//passo il vettore appena calcolato alla procedura di gauss per invertire le righe in modo analogo a quanto avviene nella riduzione
-
 //-------------------------------------------------------------------------------------------
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
 		stopwatch = omp_get_wtime();
 
 		//applico la riduzione di Gauss
-		inv = gauss(m, *d_row, col, module, st,v1);
+		gauss(*m, *d_row, col, module, st,v1);
 		//magma_gauss(m, *d_row, col, module);
 
 		//elimino le righe nulle della matrice
-		eliminate_null_rows(&m,d_row,col);
+		eliminate_null_rows(m,d_row,col);
 
 		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-stopwatch);
-  		matrix_degree(m,*d_row,col,m_deg,vet,num_var);
+  		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 		print_matrix_degree(m_deg);
 
 		new = *d_row;
 		st = new;
-
 //-----------------------------------------------------------
 		// ricalcolo la posizione dell'ultimo elemento di ogni riga dopo aver effettuato gauss
 			
-		v2 = calloc( row , sizeof( int ) );
-		for( int i = 0; i < row; i++ ){
+		v2 = calloc( *d_row , sizeof( int ) );
+		for( int i = 0; i < *d_row; i++ ){
 			for( int j = col-1; j>=0; j--){
-				if( m[i][j] != 0 ){
+				if( (*m)[i][j] != 0 ){
 					v2[i] = j;
 					break;	
 				}	
 			}
 		}
-
 //----------------------------------------------------------
 		// controllo le condizioni di uscita
 
@@ -241,24 +370,22 @@ int main (int argc, char *argv[]){
 				//verbose
 				if (verbose_flag) {
 					printf("\nMatrice intermedia:\n\n");
-					print_matrix(m, *d_row, col);
+					print_matrix(*m, *d_row, col);
 				}
 			}
 		}
-		
 		/*
 			A questo punto v1 contiene la posizione dell'ultimo elemento della riga i-esima prima di gauss e v2 i corrispettivi dopo gauss.
 			Confronto i due vettori e vado a moltiplicare solo le righe che sono state ridotte dalla procedura di gauss.
 		*/
-		
 		printf("\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
 		stopwatch = omp_get_wtime();
 
-		int length = row;
+		int length = *d_row;
 		for(int i=0; i<length; i++){
 			if( v1[i] > v2[i] ){ 	//significa che la riga è stata ridotta
-				moltiplica_riga(&m,d_row,col,i,map,degree,vet,num_var);	//allora moltiplico tale riga
+				moltiplica_riga(m,d_row,col,i,map,degree,vet,num_var);	//allora moltiplico tale riga
 			}
 		}
 
@@ -266,37 +393,78 @@ int main (int argc, char *argv[]){
 		
 		free(v2);
 		free(v1);
+	}
+	free(m_deg);
+	//finito algoritmo moltiplicazione e riduzione
+}
 
+
+
+void execute_standard(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag){
+
+	double start_time = omp_get_wtime(), stopwatch;
+	int *m_deg = calloc(max_degree+1, sizeof(int));
+
+	printf("Inizio computazione\n");
+	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
+
+	int flag,old,new;
+	flag = old = new = 0;
+	old = *d_row;
+	
+	int st = 0;
+
+	
+	while( flag != 1 ){
+
+		printf("\n -Eseguo moltiplicazione, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();
+		
+		//moltiplico la matrice per tutti i monomi possibili
+		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
+		
+		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+
+
+		printf("\n -Eseguo Gauss, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();	
+		
+		//applico la riduzione di Gauss
+		gauss(*m, *d_row, col, module, st,NULL);
+		//elimino le righe nulle della matrice
+		eliminate_null_rows(m,d_row,col);
+		
+		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-stopwatch);
+  		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
+		print_matrix_degree(m_deg);
+
+		new = *d_row;
+		st = new;
+
+
+		//se per due volte trovo una matrice con le stesso numero di righe mi fermo
+		if( old == new  )
+			flag = 1;
+		else
+			if( target_degree(m_deg) == 0 )
+				flag = 1;
+			else{
+				old = new;
+				//verbose
+				if (verbose_flag) {
+					printf("\nMatrice intermedia:\n\n");
+					print_matrix(*m, *d_row, col);
+				}
+			}
 
 	}
-
-
 	free(m_deg);
 
-	//finito algoritmo moltiplicazione e riduzione
-
-
-	//testing
-	double t1 = omp_get_wtime();
-
-	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
-
-	//stampa la matrice soluzione
-	print_matrix(m, row, col);
-
-
-
-
-	//deallocazione di tutti i puntatori utilizzati
-	matrix_free_long(&m,row,col);
-	matrix_free_int(&map,len,len);
-	matrix_free_int(&vet,len,num_var);
-
-	//testing
-	if (test_flag) {printf("\n%f\n", t1-t0);}
-
-	return 0;
+//finito algoritmo moltiplicazione e riduzione
 }
+
 
 
 int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var, int (*ord) (const void *, const void *, void*) ){

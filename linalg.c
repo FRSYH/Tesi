@@ -99,7 +99,7 @@ void magma_gauss(long long **m, int row, int col, int modulo){
 	
 
 */
-int gauss(long long **m, int row, int col, int module, int start, int *v){
+void gauss(long long **m, int row, int col, int module, int start, int *v){
 	
 	int pivot_riga = 0,r = 0,righe_trovate = 0,i,k;
 	long long s,inv,a;
@@ -122,10 +122,12 @@ int gauss(long long **m, int row, int col, int module, int start, int *v){
 		if( r < row ){ //significa che ho trovato un valore non nullo
 			if( r != righe_trovate ){
 				swap_rows(m,row,col,righe_trovate,r); //sposto la riga appena trovata nella posizone corretta
-				tmp = v[righe_trovate];
-				v[righe_trovate] = v[r];
-				v[r] = tmp;
 				flag = 1;
+				if( v != NULL ){
+					tmp = v[righe_trovate];
+					v[righe_trovate] = v[r];
+					v[r] = tmp;
+				}				
 			}			
 			pivot_riga = righe_trovate;
 			righe_trovate++;
@@ -138,12 +140,6 @@ int gauss(long long **m, int row, int col, int module, int start, int *v){
 					flag = 1;
 					st = righe_trovate;
 				}
-			}
-
-			if ( flag2 == 0 && flag == 1 )
-			{
-				flag2 = 1;
-				invarianti = righe_trovate;
 			}
 
 			#pragma omp parallel for private(i,inv,s,k,a)		
@@ -161,10 +157,8 @@ int gauss(long long **m, int row, int col, int module, int start, int *v){
 			}
 		}
 	}
-
-	//printf("%d\n", invarianti-1);
-	return invarianti-1;
 }
+
 
 
 //Calcola la riduzione di Gauss di una singola riga della matrice m.

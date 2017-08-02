@@ -18,7 +18,7 @@ void swap_rows(long long **m, int row, int col, int j, int i){
 }
 
 //Stampa formattata della matrice
-void print_matrix (long long **m, int row, int col){
+void print_matrix(long long **m, int row, int col){
 
 	int i,j;	
 	for (i=0;i<row;i++)
@@ -156,6 +156,7 @@ void append_matrix(long long ***m1, int *row1, int col1, long long **m2, int row
 
 //funzione di confronto tra la righa rowA con rowB, scorrendo le colonne da destra a sinistra
 //restituisce 1 se rowA > rowB, -1 se rowB > rowA, 0 altrimenti. Compatibile con qsort_r
+//meglio per l'uguaglianza
 int compare_rows(const void *rowA, const void *rowB, void *columns) {
 
 	long long *row1, *row2;
@@ -176,23 +177,97 @@ int compare_rows(const void *rowA, const void *rowB, void *columns) {
 }
 
 
-//tolgo da m2 le righe iniziali uguali a m1
-void eliminate_equal_rows(long long **m1, int row1, long long ***m2, int *row2, int col) {
+//funzione di confronto tra la righa rowA con rowB, sommando il contenuto di ogni colonna
+//restituisce 1 se rowA > rowB, -1 se rowB > rowA, 0 altrimenti. Compatibile con qsort_r
+//meglio per il sorting
+int compare_rows2(const void *rowA, const void *rowB, void *columns) {
+
+	long long *row1, *row2;
+	int col;
+	int s1 = 0, s2 = 0;
+	
+	col = *((int *) columns);
+	row1 = *((long long **) rowA);
+	row2 = *((long long **) rowB);
+	
+	for (int i = col-1; i >= 0; i--) {
+		s1 += (row1[i]*i);
+		s2 += (row2[i]*i);
+	}
+	
+	return s1-s2;
+}
+
+
+//tolgo da m1 le righe iniziali uguali a m2
+void eliminate_equal_starting_rows(long long ***m1, int *row1, long long **m2, int row2, int col) {
 		
-		int eliminated_rows = 0;
+		int eliminated_rows = 0, new_rows;
+		long long **temp;
 		
-		//per ogni riga consecuitiva in m1 uguale a quella in m2
-		while (eliminated_rows < row1 && !compare_rows(&m1[eliminated_rows], &(*m2)[eliminated_rows], &col))
+		//per ogni riga consecuitiva in m2 uguale a quella in m1
+		while (eliminated_rows < row2 && !compare_rows(&m2[eliminated_rows], &(*m1)[eliminated_rows], &col))
 			eliminated_rows++;
-			
 		
-		//elimino le righe iniziali uguali trovate
-		for (int i = 0; i < eliminated_rows; i++)
-			free((*m2)[i]);
+		//nuovo numero di righe
+		new_rows = *row1 - eliminated_rows;	
+		//alloco la nuova matrice e copio le righe non eliminate
+		matrix_alloc_long(&temp, new_rows, col);
+		for (int i = 0; i < new_rows; i++) {
+			for (int j = 0; j < col; j++) {
+				temp[i][j] = (*m1)[i+eliminated_rows][j];
+			}
+		}
 		
-		//faccio iniziare m2 da dopo le righe eliminate e aggiorno il numero di righe
-		*m2 = &((*m2)[eliminated_rows]);
-		*row2 = *row2 - eliminated_rows;
+		//elimino la vecchia matrice
+		matrix_free_long(m1, *row1, col);
+		
+		*m1 = temp;
+		*row1 = new_rows;
+		
 		return;
+}
+
+//elimina da m la righa di indice index
+void delete_row(long long ***m, int *row, int col, int index) {
+	
+	//l'indice deve essere minore al numero di righe
+	if (index >= *row)
+		return;
+	
+	long long **temp;
+	matrix_alloc_long(&temp, (*row)-1, col);
+	
+	//copio la matrice saltando la riga eliminata
+	for (int r = 0; r < *row-1; r++)
+		for (int c = 0; c < col; c++)
+			if (r < index)
+				temp[r][c] = (*m)[r][c];
+			else
+				temp[r][c] = (*m)[r+1][c];
+			
+	matrix_free_long(m, *row, col);
+	
+	*m = temp;
+	*row = *row - 1;
+	return;
+}
+
+//elimina da m1 le righe uguali a quelle di m2
+void eliminate_equal_rows(long long ***m1, int *row1, long long **m2, int row2, int col) {
+	
+	//confronto ogni riga di m2 con ogni riga di m1
+	for (int r = 0; r < row2; r++)
+		for (int i = 0; i < *row1; i++)
+			//se sono uguali elimino la riga da m1
+			if (!compare_rows(&(*m1)[i], &m2[r], &col)) {
+				delete_row(m1, row1, col, i);
+				//avendone tolta una le righe sono diminuite, devo diminuire anche l'indice
+				i--;
+				//per risparmiare tempo assumo che tutte le righe di m1 siano diverse tra loro
+				//possiamo farlo perchè usiamo questa funzione dopo gauss
+				break;
+			}
+	return;
 }
 
