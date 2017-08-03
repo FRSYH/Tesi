@@ -221,10 +221,10 @@ void execute_eliminazione(long long ***m, int * d_row, int col, int **map, int *
 		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
 		
 		//tot = tot + now, faccio append a tot di now (linee moltiplicate)
-		append_matrix(&tot, &row_tot, col, *m, *d_row, col);
+		append_and_free_matrix(&tot, &row_tot, col, *m, *d_row, col);
 		//non mi serve più now
-		matrix_free_long(m, *d_row, col);
-		printf("numero righe: %d     (%f sec)\n", *d_row, omp_get_wtime()-stopwatch);
+		//matrix_free_long(m, *d_row, col);
+		printf("numero righe: %d     (%f sec)\n", row_tot, omp_get_wtime()-stopwatch);
 
 		
 		//gauss(tot), gauss su tot che ha anche le linee moltiplicate
@@ -241,6 +241,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, int **map, int *
 		*d_row = row_tot;
 		matrix_alloc_long(m, *d_row, col);
 		matrix_cpy(tot, row_tot, col, *m);
+		//eliminate_equal_rows(m, d_row, prev, row_prev, col);
 		eliminate_equal_starting_rows(m, d_row, prev, row_prev, col);
 		
 		
