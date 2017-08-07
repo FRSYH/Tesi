@@ -17,6 +17,8 @@ long long module = 0;
 //moltiplica la riga indicata per tutti i possibili monomi
 void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int **vet, int num_var);
 
+void moltiplica_riga_forn(long long ***m, int * row, int col, int riga, int **map,int * degree, int **vet, int num_var, int stop_degree);
+
 int init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var,int (*ord) (const void *, const void *, void*)); //inizializza la matrice dei coefficienti
 
 //initialize the vector that keeps the number of monomial with the same grade and their position
@@ -65,6 +67,8 @@ void execute_eliminazione(long long ***m, int * d_row, int col, int **map, int *
 void execute_confronto(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var,bool verbose_flag);
 
 void execute_standard(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var,bool verbose_flag);
+
+void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag);
 
 
 int main (int argc, char *argv[]){
@@ -156,6 +160,8 @@ int main (int argc, char *argv[]){
 	//execute_confronto(&m,d_row,col,map,degree,vet,num_var,verbose_flag);
 	execute_eliminazione(&m,d_row,col,map,degree,vet,num_var,verbose_flag);
 	//execute_standard(&m,d_row,col,map,degree,vet,num_var,verbose_flag);
+	//execute_moltiplicazione_ridotta(&m,d_row,col,map,degree,vet,num_var,verbose_flag);
+
 //----------------------------------------------------------------------------
 
 	//testing
@@ -297,6 +303,9 @@ void execute_confronto(long long ***m, int * d_row, int col, int **map, int *deg
 	int *m_deg = calloc(max_degree+1, sizeof(int));
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
+	int somma=0,totale;
+	double percentuale=0.0;
+
 	printf("Inizio computazione, metodo confronto\n");
 	//-------------------------------------------------------------------------------------------
 
@@ -325,6 +334,18 @@ void execute_confronto(long long ***m, int * d_row, int col, int **map, int *deg
 		}
 
 		//passo il vettore appena calcolato alla procedura di gauss per invertire le righe in modo analogo a quanto avviene nella riduzione
+
+		for(int i=0; i<*d_row; i++){
+			for(int k=0; k<col; k++){
+				if( (*m)[i][k] != 0 ){
+					somma++;
+				}
+			}
+		}
+		totale = *d_row * col;
+		percentuale = 100.0 * ( (float) somma / (float) totale );
+		printf("\nIl %f%% degli elementi è non-zero",percentuale );
+
 //-------------------------------------------------------------------------------------------
 		printf("\n -Eseguo Gauss, ");
 		fflush(stdout);
@@ -401,6 +422,93 @@ void execute_confronto(long long ***m, int * d_row, int col, int **map, int *deg
 
 
 
+void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag){
+
+	double start_time = omp_get_wtime(), stopwatch;
+	int *m_deg = calloc(max_degree+1, sizeof(int));
+
+	printf("Inizio computazione\n");
+	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
+
+	int flag,old,new;
+	flag = old = new = 0;
+	old = *d_row;
+	
+	int st = 0;
+	int missing_degree =0;
+
+	//cerco il grado mancante
+
+	for(int i=max_degree; i>0; i--){
+		if( m_deg[i] == 0 ){
+			missing_degree = i;
+			break;
+		}
+	}
+
+	
+	while( flag != 1 ){
+
+		printf("\n -Eseguo moltiplicazione, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();
+		
+		//moltiplico la matrice per tutti i monomi possibili fino al grado mancante
+	
+		int length = *d_row;
+		for(int i=0; i<length; i++){
+			moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,missing_degree);	
+			
+		}
+
+		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+
+
+		printf("\n -Eseguo Gauss, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();	
+		
+		//applico la riduzione di Gauss
+		gauss(*m, *d_row, col, module, st,NULL);
+		//elimino le righe nulle della matrice
+		eliminate_null_rows(m,d_row,col);
+		
+		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-stopwatch);
+  		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
+		print_matrix_degree(m_deg);
+
+		new = *d_row;
+		st = new;
+
+		//cerco il nuovo grado mancante
+
+		for(int i=max_degree; i>0; i--){
+			if( m_deg[i] == 0 ){
+				missing_degree = i;
+				break;
+			}
+		}
+		
+		//se per due volte trovo una matrice con le stesso numero di righe mi fermo
+		if( old == new  )
+			flag = 1;
+		else
+			if( target_degree(m_deg) == 0 )
+				flag = 1;
+			else{
+				old = new;
+				//verbose
+				if (verbose_flag) {
+					printf("\nMatrice intermedia:\n\n");
+					print_matrix(*m, *d_row, col);
+				}
+			}
+	}
+	free(m_deg);
+//finito algoritmo moltiplicazione e riduzione
+}
+
+
 void execute_standard(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag){
 
 	double start_time = omp_get_wtime(), stopwatch;
@@ -467,7 +575,6 @@ void execute_standard(long long ***m, int * d_row, int col, int **map, int *degr
 }
 
 
-
 int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var, int (*ord) (const void *, const void *, void*) ){
 //Inizializza la matrice principale (dei coefficienti) con i coefficienti dei polinomi forniti come input.
 	return parse(num_var,v,m,vet_grd,col,module,ord);
@@ -505,6 +612,9 @@ void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int
 		// a questo punto conosco per quanti monomi devo moltiplicare e quindi
 		// conosco il numero di righe che devo aggiungere alla matrice
 		new_row = 0;
+
+
+
 		for(i=1; i<(grado_massimo_monomio+1); i++){
 			new_row += degree[i];
 		}
@@ -524,6 +634,58 @@ void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int
 		}
 	}
 }
+
+
+void moltiplica_riga_forn(long long ***m, int * row, int col, int riga, int **map,int * degree, int **vet, int num_var, int stop_degree){
+
+	int grado_massimo_riga, grado_massimo_monomio,i,j,last,new_row;
+	last = -1;
+	//cerco la posizione dell'ultimo coefficiente non nullo del polinomio rappresentato nella riga.
+	for(i=col-1; i>0; i--){
+		if( (*m)[riga][i] != 0 ){
+			last = i;
+			break;
+		}
+	}
+	//risalgo al grado del monomio appena trovato
+	//scorro la lista delle posizioni di inizio dei monomi con lo stesso grado
+	if( last != -1 ){
+
+		grado_massimo_riga = grado_monomio(last,vet,num_var);
+
+		//calcolo il grado massimo che deve avere il monomio per cui moltiplicare
+		grado_massimo_monomio = max_degree - grado_massimo_riga;
+		// a questo punto conosco per quanti monomi devo moltiplicare e quindi
+		// conosco il numero di righe che devo aggiungere alla matrice
+		new_row = 0;
+
+		if( stop_degree != 0 ){
+			
+			if( grado_massimo_monomio > stop_degree ){
+				grado_massimo_monomio = stop_degree;
+			}
+		}
+
+		for(i=1; i<(grado_massimo_monomio+1); i++){
+			new_row += degree[i];
+		}
+
+		*m = realloc( *m , (*row + new_row ) * sizeof (long long *));
+
+		for (i=(*row); i< (*row + new_row ); i++)
+			(*m)[i] = calloc(col , sizeof (long long) );
+
+
+		for(i=1; i<(new_row+1); i++){     								//scorre tutti i monomi per i quali posso moltiplicare
+			//#pragma omp parallel for shared (m,row,riga)
+			for(j=0; j<(last+1); j++){     								//scorre fino all'ultimo elemento della riga
+				(*m)[*row][ map[i][j] ] = (*m)[riga][j];  				//shift nella posizione corretta indicata dalla mappa
+			}
+			*row = *row + 1;											//aumento del conteggio delle righe
+		}
+	}
+}
+
 
 
 
