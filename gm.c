@@ -70,6 +70,8 @@ void execute_standard(long long ***m, int * d_row, int col, int **map, int *degr
 
 void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag);
 
+void verifica_correttezza(long long **m, int row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag);
+
 
 int main (int argc, char *argv[]){
 
@@ -162,6 +164,8 @@ int main (int argc, char *argv[]){
 	//execute_standard(&m,d_row,col,map,degree,vet,num_var,verbose_flag);
 	//execute_moltiplicazione_ridotta(&m,d_row,col,map,degree,vet,num_var,verbose_flag);
 
+	//verifica_correttezza(m,row,col,map,degree,vet,num_var,verbose_flag);
+
 //----------------------------------------------------------------------------
 
 	//testing
@@ -170,7 +174,7 @@ int main (int argc, char *argv[]){
 	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
 
 	//stampa la matrice soluzione
-	print_matrix(m, row, col);
+	//print_matrix(m, row, col);
 
 	//deallocazione di tutti i puntatori utilizzati
 	matrix_free_long(&m,row,col);
@@ -184,7 +188,57 @@ int main (int argc, char *argv[]){
 }
 
 
+void verifica_correttezza(long long **m, int row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag){
 
+	long long **m1,**m2;
+	int row1,row2;
+	double start_time = omp_get_wtime(), stopwatch;
+
+	row1 = row2 = row;
+
+	matrix_alloc_long(&m1,row1,col);
+	matrix_alloc_long(&m2,row2,col);
+
+	matrix_cpy(m,row,col,m1);
+	matrix_cpy(m,row,col,m2);
+
+
+
+	printf("\nESEGUO PRIMA RISOLUZIONE\n");
+
+	execute_moltiplicazione_ridotta(&m1,&row1,col,map,degree,vet,num_var,verbose_flag);
+
+	printf("\nTERMINATA PRIMA RISOLUZIONE, NUMERO RIGHE:%d\n",row1);
+
+
+	printf("\n\nESEGUO SECONDA RISOLUZIONE\n");
+
+	execute_eliminazione(&m2,&row2,col,map,degree,vet,num_var,verbose_flag);
+
+	printf("\nTERMINATA SECONDA RISOLUZIONE, NUMERO RIGHE:%d\n",row2);
+
+
+	append_and_free_matrix(&m1, &row1, col, m2, row2, col);
+
+	printf("\n\nESEGUO APPEND, NUMERO RIGHE:%d\n",row1);
+
+	int *m_deg = calloc(max_degree+1, sizeof(int));
+	matrix_degree(m1,row1,col,m_deg,vet,num_var);
+	print_matrix_degree(m_deg);
+
+	printf(" -Eseguo Gauss su matrice totale, ");
+	fflush(stdout);
+	stopwatch = omp_get_wtime();	
+	
+	gauss(m1, row1, col, module, 0, NULL);
+	eliminate_null_rows(&m1, &row1, col);
+	printf("numero righe: %d              (%f sec)\n", row1 ,omp_get_wtime()-stopwatch);
+	matrix_degree(m1,row1,col,m_deg,vet,num_var);
+	print_matrix_degree(m_deg);	
+
+	matrix_free_long(&m1,row1,col);
+
+}
 
 
 void execute_eliminazione(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag){
@@ -504,6 +558,7 @@ void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, int *
 				}
 			}
 	}
+
 	free(m_deg);
 //finito algoritmo moltiplicazione e riduzione
 }
