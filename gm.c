@@ -170,12 +170,12 @@ int main (int argc, char *argv[]){
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 //----------------------------------------------------------------------------
 
-	//execute_confronto(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	execute_confronto(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_eliminazione(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_standard(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_moltiplicazione_ridotta(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
-	verifica_correttezza(m,row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	//verifica_correttezza(m,row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
 //----------------------------------------------------------------------------
 
