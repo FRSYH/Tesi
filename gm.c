@@ -9,10 +9,21 @@
 #include "linalg.h"
 #include "matrix.h"
 #include "scan.h"
-
+#include <unistd.h>
 
 int max_degree = 0;
 long long module = 0;
+
+struct map_row {
+	int len;
+	int *col;
+};
+
+struct map {
+	int len;
+	struct map_row *row;
+};
+
 
 //moltiplica la riga indicata per tutti i possibili monomi
 void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int **vet, int num_var);
@@ -42,7 +53,11 @@ void monomial_computation_rec(int n, int m,  int **vet, int turn, int *monomial,
 //secondo cui vet è ordinato.
 void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const void *, const void *, void*));
 
+void setup_struct_map(struct map *map, int **vet, int len, int n, int m, int (*compar) (const void *, const void *, void*));
 
+void print_struct_map(struct map map);
+
+void free_struct_map(struct map *map);
 
 //multiply the entire matrix for all possible correct monomial
 void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int **vet, int num_var, int start);
@@ -125,6 +140,8 @@ int main (int argc, char *argv[]){
 	row = col = num_var = 0;
 	int (*ord) (const void *, const void *, void*);
 
+	struct map smap;
+
 
 	//alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
 	allocation(&m,&row,&col,&num_var,&v,&n,&module,&max_degree);
@@ -158,8 +175,10 @@ int main (int argc, char *argv[]){
 	matrix_alloc_int(&map,len,len);
 	//creazione della mappa
 	setup_map(map, vet, len, num_var, max_degree,ord);
-	printf("\nMappa creata in %f sec\n\n",omp_get_wtime()-stopwatch);
 
+	//setup_struct_map(&smap,vet, len, num_var, max_degree,ord);
+
+	printf("\nMappa creata in %f sec,   %d x %d \n\n",omp_get_wtime()-stopwatch,len,len);
 
 	//RISOLUZIONE PROBLEMA
 	
@@ -188,10 +207,11 @@ int main (int argc, char *argv[]){
 	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
 
 	//stampa la matrice soluzione
-	//print_matrix(m, row, col);
+	print_matrix(m, row, col);
 
 	//deallocazione di tutti i puntatori utilizzati
 	matrix_free_long(&m,row,col);
+	//free_struct_map(&smap);
 	matrix_free_int(&map,len,len);
 	matrix_free_int(&vet,len,num_var);
 
@@ -985,6 +1005,83 @@ void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const
 				map[row][col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), compar, &n)) - vet;
 		}
 	free(temp);
+}
+
+
+void setup_struct_map(struct map *map, int **vet, int len, int n, int m, int (*compar) (const void *, const void *, void*)  ){
+	
+	int sum, *temp = malloc(n * sizeof(int)),index=len;
+
+	// predispongo un array dove memorizzare temporaneamente i dati generati per la mappa.
+	int *save = calloc(len, sizeof(int));	
+
+	//	inizializzo la struttura map, la mappa ha len righe.
+	map->len = len;
+	map->row = malloc( map->len * sizeof(struct map_row) );
+
+	printf("%d\n", map->len);
+
+	//per ogni monomio in vet
+
+	for (int row = 0; row < len; row++){
+		//provo a moltiplicarlo con ogni monomio in vet
+		for (int col = 0; col < len; col++) {
+			sum = 0;
+			//eseguo il prodotto (sum è la somma dei gradi)
+			for (int v = 0; v < n; v++) {
+				temp[v] = vet[row][v] + vet[col][v];
+				sum += temp[v];
+			}
+			//se il grado del prodotto > grado massimo tutti i restanti prodotti
+			//su quella riga sono > grado massimo, setto a -1 il resto della riga
+			if (sum > m) {
+
+				//	a questo punto col è l'indice del primo elemento della mappa che non è possibile rappresentare, quindi la riga row ha solo col numero di celle e non len come prima.
+				index = col;
+				for (int i = col; i < len; i++)
+					save[col] = -1;
+				break;
+			}
+			//altrimenti cerco il prodotto in vet e metto l'indice in save
+			else{
+				//save[col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), compar, &n)) - vet;
+			}
+		}
+
+		//	terminato il ciclo sulle colonne posso inizializzare la struttura perchè conosco tutti gli elementi da inserire	
+		//  la riga attuale ha esattamente index elementi diversi da -1, quindi la riga avrà lunghezza pari a index precedentemente calcolato
+		//  alloco la riga con un array da index elementi
+
+		map->row[row].len = map->len;
+		map->row[row].col = malloc( map->row[row].len * sizeof(int) );
+		//	a questo map devo copiare gli elementi generati dento alla struttura
+
+		for(int i=0; i<map->row[row].len; i++){
+			map->row[row].col[i] = save[i];
+		}
+	}
+	free(temp);
+	free(save);
+}
+
+void print_struct_map(struct map map){
+
+	printf("Inizio stampa\n");
+	for(int i=0; i<map.len; i++ ){
+		for(int j=0; j<map.row[i].len; j++){
+			printf("%d ", map.row[i].col[j]);
+		}
+		printf("\n");
+	}
+	printf("Fine stampa\n");
+}
+
+
+void free_struct_map(struct map *map){
+	for(int i=0; i<map->len; i++){
+		free(map->row[i].col);
+	}
+	free(map->row);
 }
 
 
