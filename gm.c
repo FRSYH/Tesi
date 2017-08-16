@@ -26,9 +26,9 @@ struct map {
 
 
 //moltiplica la riga indicata per tutti i possibili monomi
-void moltiplica_riga(long long ***m, int *row, int col, int riga, int **map,int * degree, int **vet, int num_var);
+void moltiplica_riga(long long ***m, int *row, int col, int riga, struct map map,int * degree, int **vet, int num_var);
 
-void moltiplica_riga_forn(long long ***m, int * row, int col, int riga, int **map,int * degree, int **vet, int num_var, int stop_degree);
+void moltiplica_riga_forn(long long ***m, int * row, int col, int riga, struct map map,int * degree, int **vet, int num_var, int stop_degree);
 
 int init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var,int (*ord) (const void *, const void *, void*)); //inizializza la matrice dei coefficienti
 
@@ -60,7 +60,7 @@ void print_struct_map(struct map map);
 void free_struct_map(struct map *map);
 
 //multiply the entire matrix for all possible correct monomial
-void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int **vet, int num_var, int start);
+void moltiplica_matrice(long long ***m, int *row, int col, struct map map, int *degree, int **vet, int num_var, int start);
 
 //compute the different degree of the matrix rows
 void matrix_degree(long long **m, int row, int col, int *m_deg, int **vet, int num_var);
@@ -81,17 +81,17 @@ int target_degree(int *v);
 
 void eliminate_linear_dependent_rows(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
-void execute_eliminazione(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
+void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
-void execute_confronto_ridotto(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
+void execute_confronto_ridotto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
-void execute_standard(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
+void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
-void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
+void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
-void verifica_correttezza(long long **m, int row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
+void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
-void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
+void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
 
 int main (int argc, char *argv[]){
@@ -100,7 +100,7 @@ int main (int argc, char *argv[]){
 	bool verbose_flag, help_flag, version_flag, test_flag, rows_stop_flag;
 	verbose_flag = help_flag = version_flag = test_flag = false;
 	//numero cicli dei gradi di default = 10
-	int n_loops = 10;
+	int n_loops = 20;
 
 	for (int parsed = 1; parsed < argc; parsed++) {
 			if (!strcmp(argv[parsed], "--verbose"))
@@ -172,13 +172,14 @@ int main (int argc, char *argv[]){
 	printf("\nInizializzazione in %f sec\n",omp_get_wtime()-start_time);
 	stopwatch = omp_get_wtime();
 	//allocazione matrice che mappa le posizioni dei prodotti dei monomi
-	matrix_alloc_int(&map,len,len);
+	//matrix_alloc_int(&map,len,len);
 	//creazione della mappa
-	setup_map(map, vet, len, num_var, max_degree,ord);
+	//setup_map(map, vet, len, num_var, max_degree,ord);
 
-	//setup_struct_map(&smap,vet, len, num_var, max_degree,ord);
+	setup_struct_map(&smap,vet, len, num_var, max_degree,ord);
 
 	printf("\nMappa creata in %f sec,   %d x %d \n\n",omp_get_wtime()-stopwatch,len,len);
+
 
 	//RISOLUZIONE PROBLEMA
 	
@@ -191,11 +192,11 @@ int main (int argc, char *argv[]){
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 //----------------------------------------------------------------------------
 
-	//execute_confronto_ridotto(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	execute_confronto_ridotto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_eliminazione(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_standard(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	//execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_moltiplicazione_ridotta(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	execute_eliminazione_ridotta(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	//execute_eliminazione_ridotta(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	
 	//verifica_correttezza(m,row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
@@ -207,12 +208,12 @@ int main (int argc, char *argv[]){
 	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
 
 	//stampa la matrice soluzione
-	print_matrix(m, row, col);
+	//print_matrix(m, row, col);
 
 	//deallocazione di tutti i puntatori utilizzati
 	matrix_free_long(&m,row,col);
-	//free_struct_map(&smap);
-	matrix_free_int(&map,len,len);
+	free_struct_map(&smap);
+	//matrix_free_int(&map,len,len);
 	matrix_free_int(&vet,len,num_var);
 
 	//testing
@@ -225,7 +226,7 @@ int main (int argc, char *argv[]){
 
 
 
-void execute_eliminazione(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
+void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
 
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 	//non moltiplico le linee iniziali uguali a quelle dell'iterazione precedente
@@ -339,7 +340,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, int **map, int *
 
 
 
-void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
+void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
 
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 	//non moltiplico le linee iniziali uguali a quelle dell'iterazione precedente
@@ -477,7 +478,7 @@ void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, int **ma
 
 
 
-void execute_confronto_ridotto(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
+void execute_confronto_ridotto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
 
 	
 	int flag,old,new,inv;
@@ -641,7 +642,7 @@ void execute_confronto_ridotto(long long ***m, int * d_row, int col, int **map, 
 
 
 
-void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
+void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
 
 	double start_time = omp_get_wtime(), stopwatch;
 	
@@ -746,7 +747,7 @@ void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, int *
 }
 
 
-void execute_standard(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
+void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
 
 	double start_time = omp_get_wtime(), stopwatch;
 
@@ -844,7 +845,7 @@ Il parametro map fornisce una mappa delle posizioni in cui inserire il prodotto 
 La matrice aumenta il numero di righe in base a quanti prodotti devo eseguire.
 Gli ultimi due parametri servono per il calcolo del grado di un monomio.
 */
-void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int * degree, int **vet, int num_var){
+void moltiplica_riga(long long ***m, int * row, int col, int riga, struct map map,int * degree, int **vet, int num_var){
 
 
 	int grado_massimo_riga, grado_massimo_monomio,i,j,last,new_row;
@@ -883,7 +884,8 @@ void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int
 		for(i=1; i<(new_row+1); i++){     								//scorre tutti i monomi per i quali posso moltiplicare
 			//#pragma omp parallel for shared (m,row,riga)
 			for(j=0; j<(last+1); j++){     								//scorre fino all'ultimo elemento della riga
-				(*m)[*row][ map[i][j] ] = (*m)[riga][j];  				//shift nella posizione corretta indicata dalla mappa
+				//(*m)[*row][ map[i][j] ] = (*m)[riga][j];  				//shift nella posizione corretta indicata dalla mappa
+				(*m)[*row][ map.row[i].col[j] ] = (*m)[riga][j];
 			}
 			*row = *row + 1;											//aumento del conteggio delle righe
 		}
@@ -891,7 +893,7 @@ void moltiplica_riga(long long ***m, int * row, int col, int riga, int **map,int
 }
 
 
-void moltiplica_riga_forn(long long ***m, int * row, int col, int riga, int **map,int * degree, int **vet, int num_var, int stop_degree){
+void moltiplica_riga_forn(long long ***m, int * row, int col, int riga, struct map map, int * degree, int **vet, int num_var, int stop_degree){
 
 	int grado_massimo_riga, grado_massimo_monomio,i,j,last,new_row;
 	last = -1;
@@ -934,7 +936,7 @@ void moltiplica_riga_forn(long long ***m, int * row, int col, int riga, int **ma
 		for(i=1; i<(new_row+1); i++){     								//scorre tutti i monomi per i quali posso moltiplicare
 			//#pragma omp parallel for shared (m,row,riga)
 			for(j=0; j<(last+1); j++){     								//scorre fino all'ultimo elemento della riga
-				(*m)[*row][ map[i][j] ] = (*m)[riga][j];  				//shift nella posizione corretta indicata dalla mappa
+				(*m)[*row][ map.row[i].col[j] ] = (*m)[riga][j];  				//shift nella posizione corretta indicata dalla mappa
 			}
 			*row = *row + 1;											//aumento del conteggio delle righe
 		}
@@ -1001,8 +1003,9 @@ void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const
 				break;
 			}
 			//altrimenti cerco il prodotto in vet e metto l'indice in map
-			else
+			else{
 				map[row][col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), compar, &n)) - vet;
+			}
 		}
 	free(temp);
 }
@@ -1018,8 +1021,6 @@ void setup_struct_map(struct map *map, int **vet, int len, int n, int m, int (*c
 	//	inizializzo la struttura map, la mappa ha len righe.
 	map->len = len;
 	map->row = malloc( map->len * sizeof(struct map_row) );
-
-	printf("%d\n", map->len);
 
 	//per ogni monomio in vet
 
@@ -1044,7 +1045,7 @@ void setup_struct_map(struct map *map, int **vet, int len, int n, int m, int (*c
 			}
 			//altrimenti cerco il prodotto in vet e metto l'indice in save
 			else{
-				//save[col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), compar, &n)) - vet;
+				save[col] = (int **)(bsearch_r((void *) &temp, (void *) vet, len, (sizeof(int*)), compar, &n)) - vet;
 			}
 		}
 
@@ -1052,7 +1053,7 @@ void setup_struct_map(struct map *map, int **vet, int len, int n, int m, int (*c
 		//  la riga attuale ha esattamente index elementi diversi da -1, quindi la riga avrà lunghezza pari a index precedentemente calcolato
 		//  alloco la riga con un array da index elementi
 
-		map->row[row].len = map->len;
+		map->row[row].len = index;
 		map->row[row].col = malloc( map->row[row].len * sizeof(int) );
 		//	a questo map devo copiare gli elementi generati dento alla struttura
 
@@ -1162,7 +1163,7 @@ void monomial_computation_rec(int n, int m, int **vet, int turn, int *monomial, 
 
 
 
-void moltiplica_matrice(long long ***m, int *row, int col, int **map, int *degree, int **vet, int num_var, int start){
+void moltiplica_matrice(long long ***m, int *row, int col, struct map map, int *degree, int **vet, int num_var, int start){
 //Moltiplica tutte le righe della matrice m per tutti i monomi possibili che forniscono un risultato che ha grado <= grado massimo.
 	int n,i;
 	n = *row;    //n conta il numero di righe della matrice di partenza che devo moltiplicare
@@ -1309,7 +1310,7 @@ int find_finishing_cycle(int **vet, int length, int max_deg) {
 
 
 
-void verifica_correttezza(long long **m, int row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag,int n_loops, bool rows_stop_flag){
+void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag,int n_loops, bool rows_stop_flag){
 
 	long long **m1,**m2;
 	int row1,row2;

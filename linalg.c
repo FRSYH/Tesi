@@ -208,14 +208,16 @@ int grevlex_comparison(const void *monom1, const void *monom2, void *arg) {
 	//del array risultante dalla sottrazione dei monomi
 	else {
 		int *temp = malloc(n * sizeof(int));
+		int result;		
 		for (int v = 0; v < n; v++)
 			temp[v] = mon1[v] - mon2[v];
 		for (int v = (n-1); v >= 0; v--) {
 			if (temp[v] != 0) {
-				return -temp[v];
+				result = -temp[v];
 				free(temp);
 				//per evitare di fare free due volte sul  puntatore lo setto a NULL dopo la free
 				temp = NULL;
+				return result;
 			}
 		}
 		free(temp);
