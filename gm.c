@@ -79,8 +79,6 @@ int find_finishing_cycle(int **vet, int length, int max_deg);
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
 
-void eliminate_linear_dependent_rows(long long ***m, int * d_row, int col, int **map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
-
 void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
 void execute_confronto_ridotto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
@@ -100,7 +98,7 @@ int main (int argc, char *argv[]){
 	bool verbose_flag, help_flag, version_flag, test_flag, rows_stop_flag;
 	verbose_flag = help_flag = version_flag = test_flag = false;
 	//numero cicli dei gradi di default = 10
-	int n_loops = 20;
+	int n_loops = 30;
 
 	for (int parsed = 1; parsed < argc; parsed++) {
 			if (!strcmp(argv[parsed], "--verbose"))
@@ -196,7 +194,7 @@ int main (int argc, char *argv[]){
 	//execute_eliminazione(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_moltiplicazione_ridotta(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_eliminazione_ridotta(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	//execute_eliminazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	
 	//verifica_correttezza(m,row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
