@@ -525,7 +525,6 @@ void execute_confronto_ridotto(long long ***m, int * d_row, int col, struct map 
 
 		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
 
-
 	while( flag != 1 ){
 		n_round++;
 //-------------------------------------------------------------------------------------------
@@ -628,7 +627,8 @@ void execute_confronto_ridotto(long long ***m, int * d_row, int col, struct map 
 		}
 
 		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
-		
+
+	
 		free(v2);
 		free(v1);
 	}
