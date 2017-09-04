@@ -83,6 +83,8 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 
 void execute_confronto_ridotto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
+void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
+
 void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
 void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
@@ -190,12 +192,14 @@ int main (int argc, char *argv[]){
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 //----------------------------------------------------------------------------
 
+	//execute_confronto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	execute_confronto_ridotto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_eliminazione(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_moltiplicazione_ridotta(&m,d_row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	//execute_eliminazione(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_eliminazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	//execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	//execute_moltiplicazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	
+
 	//verifica_correttezza(m,row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
 //----------------------------------------------------------------------------
@@ -474,7 +478,137 @@ void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, struct m
 }
 
 
+void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
 
+	
+	int flag,old,new,inv;
+	flag = old = new = 0;
+	old = *d_row;
+
+	int st = inv = 0;
+	
+	int *v1,*v2;
+
+	double start_time = omp_get_wtime(), stopwatch;
+
+	//creo l'array che conterrà i gradi dei vari round
+	int **m_deg_array = malloc(sizeof(int*));
+	m_deg_array[0] = calloc(max_degree+1, sizeof(int));
+	int n_round = 0;
+	int *m_deg = m_deg_array[0];
+	
+	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
+
+	printf("Inizio computazione, metodo confronto\n");
+	//-------------------------------------------------------------------------------------------
+
+		printf("\n -Eseguo moltiplicazione, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();
+		
+		//moltiplico la matrice per tutti i monomi possibili
+		moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
+		
+		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+
+	while( flag != 1 ){
+		n_round++;
+//-------------------------------------------------------------------------------------------
+		// calcolo la posizone dell'ultimo elemento di ogni riga della matrice prima di effettuare gauss	
+
+		v1 = calloc( *d_row , sizeof( int ) );
+		for( int i = 0; i < *d_row; i++ ){
+			for( int j = col-1; j>=0; j--){
+				if( (*m)[i][j] != 0 ){
+					v1[i] = j;
+					break;	
+				}	
+			}
+		}
+
+		//passo il vettore appena calcolato alla procedura di gauss per invertire le righe in modo analogo a quanto avviene nella riduzione
+
+//-------------------------------------------------------------------------------------------
+		printf("\n -Eseguo Gauss, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();
+
+		//applico la riduzione di Gauss
+		gauss(*m, *d_row, col, module, st,v1);
+		//magma_gauss(m, *d_row, col, module);
+
+		//elimino le righe nulle della matrice
+		eliminate_null_rows(m,d_row,col);
+
+		//aggiungo all'array i gradi dell'attuale round
+		//n_round+1 perchè salvo anche i gradi prima di inziare i round
+		m_deg_array = realloc(m_deg_array, sizeof(int*)*(n_round+1));
+		m_deg_array[n_round] = calloc(max_degree+1, sizeof(int));
+		m_deg = m_deg_array[n_round];
+
+		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-stopwatch);
+  		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
+		print_matrix_degree(m_deg);
+
+		new = *d_row;
+		st = new;
+//-----------------------------------------------------------
+		// ricalcolo la posizione dell'ultimo elemento di ogni riga dopo aver effettuato gauss
+			
+		v2 = calloc( *d_row , sizeof( int ) );
+		for( int i = 0; i < *d_row; i++ ){
+			for( int j = col-1; j>=0; j--){
+				if( (*m)[i][j] != 0 ){
+					v2[i] = j;
+					break;	
+				}	
+			}
+		}
+//----------------------------------------------------------
+		// controllo le condizioni di uscita
+
+		//se i gradi dei round formano più di n_loops cilcli o se il flag è true
+		//e trovo una matrice con le stesso numero di righe della precedente mi fermo
+		if( (find_finishing_cycle(m_deg_array, n_round+1, max_degree) > n_loops) || (rows_stop_flag && old == new)  ) {
+			flag = 1;
+			printf("\n\nEXIT: superato numero di cicli massimo o numero righe rimaste invariate\n\n");	
+			break;
+		}else{
+			if( target_degree(m_deg) == 0 ){
+				flag = 1;
+				break;
+			}
+			else{
+				old = new;
+				//verbose
+				if (verbose_flag) {
+					printf("\nMatrice intermedia:\n\n");
+					print_matrix(*m, *d_row, col);
+				}
+			}
+		}
+		printf("\n -Eseguo moltiplicazione, ");
+		fflush(stdout);
+		stopwatch = omp_get_wtime();
+
+		int length = *d_row;
+		for(int i=0; i<length; i++){
+			if( v1[i] > v2[i] ){ 	//significa che la riga è stata ridotta
+				moltiplica_riga(m,d_row,col,i,map,degree,vet,num_var);	//allora moltiplico tale riga
+			}
+		}
+
+		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+
+	
+		free(v2);
+		free(v1);
+	}
+	for (int i = 0; i < n_round+1; i++)
+		free(m_deg_array[i]);	
+	free(m_deg_array);
+	//finito algoritmo moltiplicazione e riduzione
+}
 
 void execute_confronto_ridotto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag){
 
