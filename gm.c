@@ -193,14 +193,14 @@ int main (int argc, char *argv[]){
 //----------------------------------------------------------------------------
 
 	//execute_confronto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	execute_confronto_ridotto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	//execute_confronto_ridotto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_eliminazione(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_eliminazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_moltiplicazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	
 
-	//verifica_correttezza(m,row,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	verifica_correttezza(m,row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
 //----------------------------------------------------------------------------
 
@@ -358,7 +358,7 @@ void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, struct m
 	int n_round = 0;
 	int *m_deg = m_deg_array[0];
 	
-	printf("Inizio computazione, metodo eliminazione\n");
+	printf("Inizio computazione, metodo eliminazione ridotta\n");
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
 	int flag,old,new;
@@ -642,7 +642,7 @@ void execute_confronto_ridotto(long long ***m, int * d_row, int col, struct map 
 		}
 	}
 
-	printf("Inizio computazione, metodo confronto\n");
+	printf("Inizio computazione, metodo confronto ridotto\n");
 	//-------------------------------------------------------------------------------------------
 
 		printf("\n -Eseguo moltiplicazione, ");
@@ -784,7 +784,7 @@ void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, struc
 	int n_round = 0;
 	int *m_deg = m_deg_array[0];
 
-	printf("Inizio computazione\n");
+	printf("Inizio computazione, metodo moltiplicazione ridotta\n");
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
 	int flag,old,new;
@@ -889,7 +889,7 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 	int n_round = 0;
 	int *m_deg = m_deg_array[0];
 
-	printf("Inizio computazione\n");
+	printf("Inizio computazione, metodo standard\n");
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
 	int flag,old,new;
@@ -1460,7 +1460,7 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 
 	printf("\nESEGUO PRIMA RISOLUZIONE\n");
 
-	execute_confronto_ridotto(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	execute_confronto(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
 	printf("\nTERMINATA PRIMA RISOLUZIONE, NUMERO RIGHE:%d\n",row1);
 
@@ -1471,6 +1471,9 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 
 	printf("\nTERMINATA SECONDA RISOLUZIONE, NUMERO RIGHE:%d\n",row2);
 
+	eliminate_equal_rows(&m1, &row1, m2, row2, col);
+	
+	printf("\nRIGHE DOPO ELIM:%d\n", row1);
 
 	append_and_free_matrix(&m1, &row1, col, m2, row2, col);
 
