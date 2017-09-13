@@ -196,11 +196,11 @@ int main (int argc, char *argv[]){
 	//execute_confronto_ridotto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_eliminazione(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_eliminazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	//execute_moltiplicazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 	
 
-	verifica_correttezza(m,row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	//verifica_correttezza(m,row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
 //----------------------------------------------------------------------------
 
@@ -1444,8 +1444,8 @@ int find_finishing_cycle(int **vet, int length, int max_deg) {
 
 void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag,int n_loops, bool rows_stop_flag){
 
-	long long **m1,**m2;
-	int row1,row2;
+	long long **m1,**m2,**m3;
+	int row1,row2,row3;
 	double start_time = omp_get_wtime(), stopwatch;
 
 	row1 = row2 = row;
@@ -1471,10 +1471,17 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 
 	printf("\nTERMINATA SECONDA RISOLUZIONE, NUMERO RIGHE:%d\n",row2);
 
-	eliminate_equal_rows(&m1, &row1, m2, row2, col);
+	//trovo il numero di linee diverse tra m1 e m2
+	row3 = row1;
+	matrix_alloc_long(&m3, row3, col);
+	matrix_cpy(m1, row3, col, m3);
+	eliminate_equal_rows(&m3, &row3, m2, row2, col);
 	
-	printf("\nRIGHE DOPO ELIM:%d\n", row1);
+	printf("\nRIGHE DIVERSE RISPETTO AL METODO STANDARD:%d\n", row3);
+	matrix_free_long(&m3, row3, col);
 
+	//controllo che i polinomi di una matrice siano linearmente
+	//dipendenti da quelli dell'altra, necessario per soluzioni equivalenti
 	append_and_free_matrix(&m1, &row1, col, m2, row2, col);
 
 	printf("\n\nESEGUO APPEND, NUMERO RIGHE:%d\n",row1);

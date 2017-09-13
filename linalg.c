@@ -142,7 +142,7 @@ void gauss(long long **m, int row, int col, int module, int start, int *v){
 				}
 			}
 
-			#pragma omp parallel for private(i,inv,s,k,a)		
+			#pragma omp parallel for private(i,inv,s,k,a)	
 			for( i = st; i < row; i++ ){
 				if( m[i][pivot_colonna] != 0 ){
 					inv = invers(m[pivot_riga][pivot_colonna],module);		//inverso dell´ elemento in m[r][pivot_colonna]
