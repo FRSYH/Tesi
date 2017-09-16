@@ -89,7 +89,7 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 
 void execute_moltiplicazione_ridotta(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
-void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
+void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag, int ex1, int ex2);
 
 void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
@@ -97,35 +97,47 @@ void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, struct m
 int main (int argc, char *argv[]){
 
 	//parsing delle opzioni
-	bool verbose_flag, help_flag, version_flag, test_flag, rows_stop_flag;
-	verbose_flag = help_flag = version_flag = test_flag = false;
-	//numero cicli dei gradi di default = 10
-	int n_loops = 30;
+	bool verbose_flag, help_flag, version_flag, test_flag, rows_stop_flag, verify_flag;
+	verbose_flag = help_flag = test_flag = verify_flag = false;
+	//numero cicli dei gradi di default = 30
+	//execute_standard di default
+	//verifica tra standard e confronto di default
+	//0 -> standard
+	//1 -> confronto
+	//2 -> eliminazione
+	//3 -> moltiplicazione_ridotta
+	//4 -> confronto_ridotto
+	//5 -> eliminazione_ridotta
+	int n_loops = 30, execute = 0, ex1 = 0, ex2 = 1;
 
 	for (int parsed = 1; parsed < argc; parsed++) {
-			if (!strcmp(argv[parsed], "--verbose"))
-				verbose_flag = true;
-			else if (!strcmp(argv[parsed], "--help"))
-				help_flag = true;
-			else if (!strcmp(argv[parsed], "--version"))
-				version_flag = true;
-			else if (!strcmp(argv[parsed], "--test"))
-				test_flag = true;
-			else if (!strcmp(argv[parsed], "--rows-number-stop"))
-				rows_stop_flag = true;
-			else if (!strcmp(argv[parsed], "--loops")) {
-				parsed++;
-				n_loops = atoi(argv[parsed]);
-			}
+		if (!strcmp(argv[parsed], "--verbose"))
+			verbose_flag = true;
+		else if (!strcmp(argv[parsed], "--help"))
+			help_flag = true;
+		else if (!strcmp(argv[parsed], "--test"))
+			test_flag = true;
+		else if (!strcmp(argv[parsed], "--rows-number-stop"))
+			rows_stop_flag = true;
+		else if (!strcmp(argv[parsed], "--loops")) {
+			parsed++;
+			n_loops = atoi(argv[parsed]);
+		}
+		else if (parsed < argc && !strcmp(argv[parsed], "--execute")) {
+			parsed++;
+			execute = atoi(argv[parsed]);
+		}
+		else if (parsed < argc && !strcmp(argv[parsed], "--verify")) {
+			verify_flag = true;
+			parsed++;
+			ex1 = atoi(argv[parsed]);
+			parsed++;
+			ex2 = atoi(argv[parsed]);
+		}
 	}
 
 	if (help_flag) {
 		printf("Per istruzioni sull'utilizzo --> https://github.com/FRSYH/Tesi\n");
-		return 0;
-	}
-
-	if (version_flag) {
-		printf("Versione Alfa\n");
 		return 0;
 	}
 
@@ -192,15 +204,32 @@ int main (int argc, char *argv[]){
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 //----------------------------------------------------------------------------
 
-	//execute_confronto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_confronto_ridotto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_eliminazione(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_eliminazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	//execute_moltiplicazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
-	
-
-	//verifica_correttezza(m,row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	if (!verify_flag)
+		switch (execute) {
+		case 0:
+			execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+			break;
+		case 1:
+			execute_confronto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+			break;
+		case 2:
+			execute_eliminazione(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+			break;
+		case 3:
+			execute_moltiplicazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+			break;
+		case 4:
+			execute_confronto_ridotto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+			break;
+		case 5:
+			execute_eliminazione_ridotta(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+			break;
+		default:
+			execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+			break;	
+		}
+	else	
+		verifica_correttezza(m,row,col,smap,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag,ex1,ex2);
 
 //----------------------------------------------------------------------------
 
@@ -1442,7 +1471,7 @@ int find_finishing_cycle(int **vet, int length, int max_deg) {
 
 
 
-void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag,int n_loops, bool rows_stop_flag){
+void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag,int n_loops, bool rows_stop_flag, int ex1, int ex2){
 
 	long long **m1,**m2,**m3;
 	int row1,row2,row3;
@@ -1459,17 +1488,65 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 
 
 	printf("\nESEGUO PRIMA RISOLUZIONE\n");
-
-	execute_confronto(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	switch (ex1) {
+	case 0:
+		execute_standard(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 1:
+		execute_confronto(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 2:
+		execute_eliminazione(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 3:
+		execute_moltiplicazione_ridotta(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 4:
+		execute_confronto_ridotto(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 5:
+		execute_eliminazione_ridotta(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	default:
+		execute_standard(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;	
+	}
+	//execute_eliminazione_ridotta(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
 	printf("\nTERMINATA PRIMA RISOLUZIONE, NUMERO RIGHE:%d\n",row1);
 
 
 	printf("\n\nESEGUO SECONDA RISOLUZIONE\n");
 
-	execute_standard(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+	switch (ex2) {
+	case 0:
+		execute_standard(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 1:
+		execute_confronto(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 2:
+		execute_eliminazione(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 3:
+		execute_moltiplicazione_ridotta(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 4:
+		execute_confronto_ridotto(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	case 5:
+		execute_eliminazione_ridotta(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;
+	default:
+		execute_standard(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
+		break;	
+	}
+
+	//execute_confronto_ridotto(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,rows_stop_flag);
 
 	printf("\nTERMINATA SECONDA RISOLUZIONE, NUMERO RIGHE:%d\n",row2);
+
+	printf("\n\nCONFRONTO LE MATRICI PER OTTENERE IL NUMERO DI LINEE DIVERSE\n");
 
 	//trovo il numero di linee diverse tra m1 e m2
 	row3 = row1;
@@ -1477,7 +1554,7 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 	matrix_cpy(m1, row3, col, m3);
 	eliminate_equal_rows(&m3, &row3, m2, row2, col);
 	
-	printf("\nRIGHE DIVERSE RISPETTO AL METODO STANDARD:%d\n", row3);
+	printf("\nRIGHE DIVERSE RISPETTO TRA PRIMO E SECONDO METODO:%d\n", row3);
 	matrix_free_long(&m3, row3, col);
 
 	//controllo che i polinomi di una matrice siano linearmente
