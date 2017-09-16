@@ -1,40 +1,50 @@
-ISTRUZIONI PER COMPILAZIONE ED ESECUZIONE PROGRAMMA
+# ISTRUZIONI PER COMPILAZIONE ED ESECUZIONE PROGRAMMA
 
 Il programma gm.c deve essere eseguito su sistemi Unix (su windows manca una metodo delle librerie standard di C).
 
 
 Per compilare il programma, necessaria la libreria OpenMP.
->gcc gm.c -fopenmp linalg.c matrix.c scan.c -l gomp -lgmp -o gm
+
+`gcc gm.c -fopenmp linalg.c matrix.c scan.c -l gomp -lgmp -o gm`
 
 Per eseguire il programma
->./gm --options < input_file > output_file
+
+`./gm --options < input_file > output_file`
 
 
-options
---verbose: per stampa matrici nei passi intermedi
+**options**:
 
---test: per stampa di informazioni aggiuntive di test
+--**verbose**: per stampa matrici nei passi intermedi
 
---execute n: per scegliere quale tecnica risolutiva utilizzare, n scelta nel seguente elenco
+--**test**: per stampa di informazioni aggiuntive di test
+
+--**execute n**: per scegliere quale tecnica risolutiva utilizzare, n scelta nel seguente elenco
 
 0 -> standard
+
 1 -> confronto
+
 2 -> eliminazione
+
 3 -> moltiplicazione_ridotta
+
 4 -> confronto_ridotto
+
 5 -> eliminazione_ridotta
 
---verify x y: per eseguire un confronto tra i risultati di due tecniche, x e y scelte dall'elenco precedente. 
+
+--**verify x y**: per eseguire un confronto tra i risultati di due tecniche, x e y scelte dall'elenco precedente. 
 
 
-ESEMPIO DI ESECUZIONE
->./gm --execute 0 < input.txt > output.txt
+## ESEMPIO DI ESECUZIONE
+
+`./gm --execute 0 < input.txt > output.txt`
 
 esegue il metodo standard sull'input contenuto nel file input.txt
 
 
 
-FORMATO DEI FILES DI INPUT
+## FORMATO DEI FILES DI INPUT
 
 Per eseguire correttamente il programma occorre fornire i dati di input nel seguente ordine e formato.
 - modulo dei coefficienti
@@ -47,7 +57,7 @@ Per eseguire correttamente il programma occorre fornire i dati di input nel segu
 esempio di file di input https://github.com/FRSYH/Tesi/blob/master/input.txt
 
 
-ORDINAMENTO POLINOMI
+## ORDINAMENTO POLINOMI
 
 Ordinamenti implementati e relativi codici di input:
 - grevlex_comparison -> 0
