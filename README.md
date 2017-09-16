@@ -14,23 +14,23 @@ Per eseguire il programma
 
 **options**:
 
---**verbose**: per stampa matrici nei passi intermedi
+--**verbose**: stampa delle matrici nei passi intermedi
 
---**test**: per stampa di informazioni aggiuntive di test
+--**test**: stampa di informazioni aggiuntive per testing
 
 --**execute n**: per scegliere quale tecnica risolutiva utilizzare, n scelta nel seguente elenco
 
-0 -> standard
+0 -> standard (normale moltiplicazione)
 
-1 -> confronto
+1 -> confronto (si moltiplicano le sole righe che sono state ridotte nel Gauss precedente)
 
-2 -> eliminazione
+2 -> eliminazione 
 
-3 -> moltiplicazione_ridotta
+3 -> moltiplicazione_ridotta (si moltiplica la matrice fino al grado massimo mancante)
 
-4 -> confronto_ridotto
+4 -> confronto_ridotto (tecnica 1+2)
 
-5 -> eliminazione_ridotta
+5 -> eliminazione_ridotta (tecnica 1+3)
 
 
 --**verify x y**: per eseguire un confronto tra i risultati di due tecniche, x e y scelte dall'elenco precedente. 
