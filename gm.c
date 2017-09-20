@@ -93,6 +93,8 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 
 void execute_eliminazione_ridotta(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool rows_stop_flag);
 
+void print_incognite(long long **m, int row, int col, int num_var, int **vet);
+
 
 int main (int argc, char *argv[]){
 
@@ -233,13 +235,17 @@ int main (int argc, char *argv[]){
 
 //----------------------------------------------------------------------------
 
-	//testing
+	
 	double t1 = omp_get_wtime();
 
 	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
 
-	//stampa la matrice soluzione
+
+	//stampa tutta la matrice soluzione
 	//print_matrix(m, row, col);
+
+	printf("Valori delle incognite\n\n");
+	print_incognite(m,row,col,num_var,vet);
 
 	//deallocazione di tutti i puntatori utilizzati
 	matrix_free_long(&m,row,col);
@@ -1579,4 +1585,31 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 
 	matrix_free_long(&m1,row1,col);
 
+}
+
+
+void print_incognite(long long **m, int row, int col, int num_var, int **vet ){
+
+	int grado,last;
+
+	for(int r = row - (num_var+1); r<row; r++){
+
+		//cerca la posizione dell'ulitmo elemento non nullo della riga r
+		for( int i=col-1; i>=0; i-- ){
+			if( m[r][i] != 0 ){
+				last = i;
+				break;
+			}
+		}
+		//calcola il grado della riga r
+		grado = grado_monomio(last,vet,num_var);
+		//se il grado della riga r è 1 allora stampa tutta la riga della matrice
+		if( grado == 1 ){
+			for( int j=0; j<last+1; j++ ){
+				printf("%lli ", m[r][j]);
+			}
+			printf("\n\n");
+		}
+	}
+	printf("\n");	
 }

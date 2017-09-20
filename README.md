@@ -35,6 +35,10 @@ Per eseguire il programma
 
 --**verify x y**: per eseguire un confronto tra i risultati di due tecniche, x e y scelte dall'elenco precedente. 
 
+--**rows-number-stop**:  fa terminare la computazione quando due matrici hanno lo stesso numero di righe
+
+--**loops n**: n indica il numero massimo di cicli nei gradi che la computazione può avere, superato il limite si arresta tutta la computazione
+
 
 ## ESEMPIO DI ESECUZIONE
 
