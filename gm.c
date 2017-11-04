@@ -242,8 +242,10 @@ int main (int argc, char *argv[]){
 
 
 	//stampa tutta la matrice soluzione
-	//print_matrix(m, row, col);
-
+	if (verbose_flag) {
+		printf("\n\n matrice soluzione:\n\n");
+		print_matrix(m, row, col);
+	}
 	printf("Valori delle incognite\n\n");
 	print_incognite(m,row,col,num_var,vet);
 
