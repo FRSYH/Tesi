@@ -155,19 +155,20 @@ void append_matrix(long long ***m1, int *row1, int col1, long long **m2, int row
 
 
 
-void append_and_free_matrix(long long ***m1, int *row1, int col1, long long **m2, int row2, int col2){
+void append_and_free_matrix(long long ***m1, int *row1, int col1, long long ***m2, int *row2, int col2){
 	int i=0;
-	int tot = *row1 + row2;
+	int tot = *row1 + *row2;
 	if( col1 == col2 ){ //se le matrici hanno lo stesso numero di colonne
 		*m1 = realloc(*m1, tot * sizeof(long long *));
 		for (int r = *row1; r < tot; r++) {
 			(*m1)[r] = malloc(col1 * sizeof (long long));
 			for (int c = 0; c < col1; c++)
-				(*m1)[r][c] = m2[r-*row1][c];
-			free(m2[r-*row1]);
+				(*m1)[r][c] = (*m2)[r-*row1][c];
+			free((*m2)[r-*row1]);
 		}
 		*row1 = tot;
-		free(m2);
+		*row2 = 0;
+		free(*m2);
 	}
 }
 
