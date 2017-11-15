@@ -30,7 +30,7 @@ void moltiplica_riga(long long ***m, int *row, int col, int riga, struct map map
 
 void moltiplica_riga_forn(long long ***m, int * row, int col, int riga, struct map map,int * degree, int **vet, int num_var, int stop_degree);
 
-int init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var,int (*ord) (const void *, const void *, void*)); //inizializza la matrice dei coefficienti
+int init_matrix(long long **m, int row, int col,int **vet_grd, char *v, int num_var,int (*ord) (const void *, const void *, void*), FILE *input_file); //inizializza la matrice dei coefficienti
 
 //initialize the vector that keeps the number of monomial with the same grade and their position
 void init_degree_vector(int * degree, int num_var);
@@ -98,18 +98,17 @@ void print_incognite(long long **m, int row, int col, int num_var, int **vet);
 
 int main (int argc, char *argv[]){
 
+	
+	FILE *input_file = NULL;
 	//parsing delle opzioni
-	bool verbose_flag, help_flag, version_flag, test_flag, rows_stop_flag, verify_flag;
-	verbose_flag = help_flag = test_flag = verify_flag = false;
+	bool verbose_flag, help_flag, version_flag, test_flag, rows_stop_flag, verify_flag, manual_expand_flag, reduced_expand_flag;
+	verbose_flag = help_flag = test_flag = verify_flag = manual_expand_flag , reduced_expand_flag = false;
 	//numero cicli dei gradi di default = 30
 	//execute_standard di default
 	//verifica tra standard e confronto di default
 	//0 -> standard
 	//1 -> confronto
 	//2 -> eliminazione
-	//3 -> moltiplicazione_ridotta
-	//4 -> confronto_ridotto
-	//5 -> eliminazione_ridotta
 	int n_loops = 30, execute = 0, ex1 = 0, ex2 = 1;
 
 	for (int parsed = 1; parsed < argc; parsed++) {
@@ -121,9 +120,21 @@ int main (int argc, char *argv[]){
 			test_flag = true;
 		else if (!strcmp(argv[parsed], "--rows-number-stop"))
 			rows_stop_flag = true;
+		else if (!strcmp(argv[parsed], "--manual-expand"))
+			manual_expand_flag = true;
+		else if (!strcmp(argv[parsed], "--reduced-expand"))
+			reduced_expand_flag = true;
 		else if (!strcmp(argv[parsed], "--loops")) {
 			parsed++;
 			n_loops = atoi(argv[parsed]);
+		}
+		else if (parsed < argc && !strcmp(argv[parsed], "--input")) {
+			parsed++;
+			input_file = fopen(argv[parsed], "r");
+			if (!input_file) {
+				perror("Errore nell'apertura del file di input");
+				return (-1);
+			}
 		}
 		else if (parsed < argc && !strcmp(argv[parsed], "--execute")) {
 			parsed++;
@@ -143,6 +154,9 @@ int main (int argc, char *argv[]){
 		return 0;
 	}
 
+	if (!input_file)
+		input_file = stdin;
+
 
 	//inizio
 	double start_time = omp_get_wtime(), stopwatch;
@@ -158,7 +172,7 @@ int main (int argc, char *argv[]){
 
 
 	//alloca la matrice principale, legge da input: il modulo,massimo grado e numero variabili
-	allocation(&m,&row,&col,&num_var,&v,&n,&module,&max_degree);
+	allocation(&m,&row,&col,&num_var,&v,&n,&module,&max_degree,input_file);
 	d_row = &row;
 
 	if( order(&ord,n) != 0 ){
@@ -178,7 +192,7 @@ int main (int argc, char *argv[]){
 	qsort_r(vet, len, sizeof(int*), ord, &num_var);
 
 	//inizializzazione matrice (lettura dati input)
-	if( init_matrix(m,row,col,vet,v,num_var,ord) == -1 ){
+	if( init_matrix(m,row,col,vet,v,num_var,ord,input_file) == -1 ){
 		printf("Errore di input !!!\n\nTERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
 		return 0;
 	}
@@ -1000,9 +1014,9 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 }
 
 
-int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var, int (*ord) (const void *, const void *, void*) ){
+int init_matrix(long long **m, int row, int col, int **vet_grd, char *v, int num_var, int (*ord) (const void *, const void *, void*), FILE *input_file){
 //Inizializza la matrice principale (dei coefficienti) con i coefficienti dei polinomi forniti come input.
-	return parse(num_var,v,m,vet_grd,col,module,ord);
+	return parse(num_var,v,m,row,vet_grd,col,module,ord,input_file);
 }
 
 
