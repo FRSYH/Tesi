@@ -824,34 +824,34 @@ void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const
 
 void setup_struct_map(struct map *map, int **vet, int len, int n, int m, int (*compar) (const void *, const void *, void*)  ){
 	
-	int sum, *temp = malloc(n * sizeof(int)),index=len;
-
-	// predispongo un array dove memorizzare temporaneamente i dati generati per la mappa.
-	int *save = calloc(len, sizeof(int));	
+	int sum, index=len;
 
 	//	inizializzo la struttura map, la mappa ha len righe.
 	map->len = len;
 	map->row = malloc( map->len * sizeof(struct map_row) );
 
 	//per ogni monomio in vet
-
-	for (int row = 0; row < len; row++){
+	int row, col, i, v;
+	#pragma omp parallel for private(row,col,sum,index,i,v) schedule(dynamic)
+	for (row = 0; row < len; row++){
+		index = 0;
+		//dichiarati dentro per la parallelizzazione
+		int *temp = malloc(n * sizeof(int));
+		int *save = calloc(len, sizeof(int));
 		//provo a moltiplicarlo con ogni monomio in vet
-		for (int col = 0; col < len; col++) {
+		for (col = 0; col < len; col++) {
 			sum = 0;
 			//eseguo il prodotto (sum è la somma dei gradi)
-			for (int v = 0; v < n; v++) {
+			for (v = 0; v < n; v++) {
 				temp[v] = vet[row][v] + vet[col][v];
 				sum += temp[v];
 			}
 			//se il grado del prodotto > grado massimo tutti i restanti prodotti
-			//su quella riga sono > grado massimo, setto a -1 il resto della riga
+			//su quella riga sono > grado massimo
 			if (sum > m) {
 
 				//	a questo punto col è l'indice del primo elemento della mappa che non è possibile rappresentare, quindi la riga row ha solo col numero di celle e non len come prima.
 				index = col;
-				for (int i = col; i < len; i++)
-					save[col] = -1;
 				break;
 			}
 			//altrimenti cerco il prodotto in vet e metto l'indice in save
@@ -868,12 +868,12 @@ void setup_struct_map(struct map *map, int **vet, int len, int n, int m, int (*c
 		map->row[row].col = malloc( map->row[row].len * sizeof(int) );
 		//	a questo map devo copiare gli elementi generati dento alla struttura
 
-		for(int i=0; i<map->row[row].len; i++){
+		for(i=0; i<map->row[row].len; i++)
 			map->row[row].col[i] = save[i];
-		}
+		
+		free(temp);
+		free(save);
 	}
-	free(temp);
-	free(save);
 }
 
 void print_struct_map(struct map map){
