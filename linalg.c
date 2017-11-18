@@ -147,7 +147,7 @@ void gauss(long long **m, int row, int col, int module, int start, int *v){
 				if( m[i][pivot_colonna] != 0 ){
 					inv = invers(m[pivot_riga][pivot_colonna],module);		//inverso dell´ elemento in m[r][pivot_colonna]
 					s = mul_mod(inv,m[i][pivot_colonna],module);						
-					//#pragma omp parallel for private (k,a) shared (m)	
+					//#pragma omp parallel for private (k,a) shared (m) schedule(dynamic)
 					for( k = 0; k < pivot_colonna+1; k++ ){
 						a = mul_mod(s,m[pivot_riga][k],module);
 						m[i][k] = sub_mod(m[i][k],a,module);

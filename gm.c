@@ -55,7 +55,7 @@ void setup_map(int **map, int **vet, int len, int n, int m, int (*compar) (const
 
 void setup_struct_map(struct map *map, int **vet, int len, int n, int m, int (*compar) (const void *, const void *, void*));
 
-void print_struct_map(struct map map);
+void print_struct_map(struct map map, FILE *output_file);
 
 void free_struct_map(struct map *map);
 
@@ -66,7 +66,7 @@ void moltiplica_matrice(long long ***m, int *row, int col, struct map map, int *
 void matrix_degree(long long **m, int row, int col, int *m_deg, int **vet, int num_var);
 
 //formatted print of matrix degree
-void print_matrix_degree(int *m_deg);
+void print_matrix_degree(int *m_deg, FILE *output_file);
 
 //funzione di confronto gli array rowA con rowB, scorrendo gli elementi da destra a sinistra
 //restituisce 1 se rowA > rowB, -1 se rowB > rowA, 0 altrimenti. Compatibile con qsort_r
@@ -79,20 +79,20 @@ int find_finishing_cycle(int **vet, int length, int max_deg);
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
 
-void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion);
+void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file);
 
-void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion);
+void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file);
 
-void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion);
+void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file);
 
-void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, int ex1, int ex2);
+void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file, int ex1, int ex2);
 
-void print_incognite(long long **m, int row, int col, int num_var, int **vet);
+void print_incognite(long long **m, int row, int col, int num_var, int **vet, FILE *output_file);
 
 
 int main (int argc, char *argv[]){
 
-	FILE *input_file = NULL;
+	FILE *input_file = NULL, *output_file = NULL;
 	//parsing delle opzioni
 	bool verbose_flag, help_flag, version_flag, test_flag, loop_flag, verify_flag, manual_expand_flag, reduced_expand_flag, set_expand_flag;
 	verbose_flag = help_flag = version_flag = test_flag= loop_flag = verify_flag = manual_expand_flag = reduced_expand_flag = set_expand_flag = false;
@@ -129,6 +129,14 @@ int main (int argc, char *argv[]){
 				return (-1);
 			}
 		}
+		else if (parsed < argc && !strcmp(argv[parsed], "--output")) {
+			parsed++;
+			output_file = fopen(argv[parsed], "w");
+			if (!output_file) {
+				perror("Errore nell'apertura del file di output");
+				return (-1);
+			}
+		}
 		else if (parsed < argc && !strcmp(argv[parsed], "--execute")) {
 			parsed++;
 			execute = atoi(argv[parsed]);
@@ -149,12 +157,14 @@ int main (int argc, char *argv[]){
 	}
 
 	if (help_flag) {
-		printf("Per istruzioni sull'utilizzo --> https://github.com/FRSYH/Tesi\n");
+		fprintf(stdout, "Per istruzioni sull'utilizzo --> https://github.com/FRSYH/Tesi\n");
 		return 0;
 	}
 
 	if (!input_file)
 		input_file = stdin;
+	if (!output_file)
+		output_file = stdout;
 
 	//inizio
 	double start_time = omp_get_wtime(), stopwatch;
@@ -174,7 +184,7 @@ int main (int argc, char *argv[]){
 	d_row = &row;
 
 	if( order(&ord,n) != 0 ){
-		printf("Ordinamento insesistente!!!\n\nTERMINAZIONE PROGRAMMA");
+		fprintf(stderr, "Ordinamento insesistente!!!\n\nTERMINAZIONE PROGRAMMA");
 		return 0;
 	}
 
@@ -191,11 +201,11 @@ int main (int argc, char *argv[]){
 
 	//inizializzazione matrice (lettura dati input)
 	if( init_matrix(m,row,col,vet,v,num_var,ord,input_file) == -1 ){
-		printf("Errore di input !!!\n\nTERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
+		fprintf(stderr, "Errore di input !!!\n\nTERMINAZIONE PROGRAMMA"); //se l'input è in formato scorrettro abort del programma
 		return 0;
 	}
 
-	printf("\nInizializzazione in %f sec\n",omp_get_wtime()-start_time);
+	fprintf(output_file, "\nInizializzazione in %f sec\n",omp_get_wtime()-start_time);
 	stopwatch = omp_get_wtime();
 	//allocazione matrice che mappa le posizioni dei prodotti dei monomi
 	//matrix_alloc_int(&map,len,len);
@@ -204,7 +214,7 @@ int main (int argc, char *argv[]){
 
 	setup_struct_map(&smap,vet, len, num_var, max_degree,ord);
 
-	printf("\nMappa creata in %f sec,   %d x %d \n\n",omp_get_wtime()-stopwatch,len,len);
+	fprintf(output_file, "\nMappa creata in %f sec,   %d x %d \n\n",omp_get_wtime()-stopwatch,len,len);
 
 
 	//RISOLUZIONE PROBLEMA
@@ -221,33 +231,33 @@ int main (int argc, char *argv[]){
 	if (!verify_flag)
 		switch (execute) {
 		case 1:
-			execute_confronto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion);
+			execute_confronto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
 			break;
 		case 2:
-			execute_eliminazione(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion);
+			execute_eliminazione(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
 			break;
 		default:
-			execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion);
+			execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
 			break;	
 		}
 	else	
-		verifica_correttezza(m,row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,ex1,ex2);
+		verifica_correttezza(m,row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file,ex1,ex2);
 
 //----------------------------------------------------------------------------
 
 	
 	double t1 = omp_get_wtime();
 
-	printf("\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
+	fprintf(output_file, "\nTarget raggiunto, soluzione trovata in %f sec\n\n",omp_get_wtime()-start_time);
 
 
 	//stampa tutta la matrice soluzione
 	if (verbose_flag) {
-		printf("\n\n matrice soluzione:\n\n");
-		print_matrix(m, row, col);
+		fprintf(output_file, "\n\n matrice soluzione:\n\n");
+		print_matrix(m, row, col, output_file);
 	}
-	printf("Valori delle incognite\n\n");
-	print_incognite(m,row,col,num_var,vet);
+	fprintf(output_file, "Valori delle incognite\n\n");
+	print_incognite(m,row,col,num_var,vet,output_file);
 
 	//deallocazione di tutti i puntatori utilizzati
 	matrix_free_long(&m,row,col);
@@ -256,7 +266,7 @@ int main (int argc, char *argv[]){
 	matrix_free_int(&vet,len,num_var);
 
 	//testing
-	if (test_flag) {printf("\n%f\n", t1-t0);}
+	if (test_flag) {fprintf(output_file, "\n%f\n", t1-t0);}
 
 	return 0;
 }
@@ -265,7 +275,7 @@ int main (int argc, char *argv[]){
 
 
 
-void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag,bool manual_expand_flag,bool reduced_expand_flag, bool set_expand_flag, int expansion){
+void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag,bool manual_expand_flag,bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file){
 
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 	//non moltiplico le linee iniziali uguali a quelle dell'iterazione precedente
@@ -281,7 +291,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 	int n_round = 0;
 	int *m_deg = m_deg_array[0];
 	
-	printf("Inizio computazione, metodo eliminazione\n");
+	fprintf(output_file, "Inizio computazione, metodo eliminazione\n");
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
 	int flag,old,new;
@@ -311,14 +321,14 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 
 		//mult(now), moltiplico le linee diverse. Nella prima iterazione
 		//non sono diverse, ma sono poche e non influisce sulle prestazioni
-		printf("\n -Eseguo moltiplicazione su m, ");
+		fprintf(output_file, "\n -Eseguo moltiplicazione su m, ");
 		fflush(stdout);
 	
 
 		int length = *d_row;
 		//moltiplico
 		if (manual_expand_flag) {
-			printf("inserire grado di espansione: ");
+			fprintf(stdout, "inserire grado di espansione: ");
 			scanf(" %d", &missing_degree);
 		}
 		else if (reduced_expand_flag)
@@ -340,17 +350,17 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 		append_and_free_matrix(&tot, &row_tot, col, m, d_row, col);
 		//non mi serve più now
 		//matrix_free_long(m, *d_row, col);
-		printf("numero righe: %d     (%f sec)\n", row_tot, omp_get_wtime()-stopwatch);
+		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", missing_degree, row_tot, omp_get_wtime()-stopwatch);
 
 		
 		//gauss(tot), gauss su tot che ha anche le linee moltiplicate
-		printf(" -Eseguo Gauss, ");
+		fprintf(output_file, " -Eseguo Gauss, ");
 		fflush(stdout);
 		stopwatch = omp_get_wtime();	
 		
 		gauss(tot, row_tot, col, module, 0, NULL);
 		eliminate_null_rows(&tot, &row_tot, col);
-		printf("numero righe: %d              (%f sec)\n", row_tot ,omp_get_wtime()-stopwatch);
+		fprintf(output_file, "numero righe: %d              (%f sec)\n", row_tot ,omp_get_wtime()-stopwatch);
 		
 		//now = tot - prev, tolgo da tot le linee iniziali uguali a quelle
 		//dell'iterazione precedente e assegno il risultato a now
@@ -368,7 +378,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 		
 		//degree(tot), aggiorno gradi/target
   		matrix_degree(tot, row_tot,col,m_deg,vet,num_var);
-		print_matrix_degree(m_deg);
+		print_matrix_degree(m_deg,output_file);
 		new = row_tot;
 		
 		matrix_free_long(&prev, row_prev, col);
@@ -378,7 +388,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 		//o trovo una matrice con le stesso numero di righe della precedente mi fermo
 		if( (find_finishing_cycle(m_deg_array, n_round+1, max_degree) > n_loops && loop_flag) || ((!loop_flag) && old == new)  ) {
 			flag = 1;
-			printf("\n\nEXIT: superato numero di cicli massimo o numero righe rimaste invariate\n\n");	
+			fprintf(output_file, "\n\nEXIT: superato numero di cicli massimo o numero righe rimaste invariate\n\n");	
 		}
 		else
 			if( target_degree(m_deg) == 0 )
@@ -387,8 +397,8 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 				old = new;
 				//verbose
 				if (verbose_flag) {
-					printf("\nMatrice intermedia:\n\n");
-					print_matrix(tot, row_tot, col);
+					fprintf(output_file, "\nMatrice intermedia:\n\n");
+					print_matrix(tot, row_tot, col, output_file);
 				}
 			}
 
@@ -404,7 +414,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 
 
 
-void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag,bool manual_expand_flag,bool reduced_expand_flag, bool set_expand_flag, int expansion){
+void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag,bool manual_expand_flag,bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file){
 
 	
 	int flag,old,new,inv;
@@ -429,15 +439,15 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 	if (set_expand_flag)
 		missing_degree = expansion;
 
-	printf("Inizio computazione, metodo confronto\n");
+	fprintf(output_file, "Inizio computazione, metodo confronto\n");
 	//-------------------------------------------------------------------------------------------
 
-		printf("\n -Eseguo moltiplicazione, ");
+		fprintf(output_file, "\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
 
 		//moltiplico
 		if (manual_expand_flag) {
-			printf("inserire grado di espansione: ");
+			fprintf(stdout, "inserire grado di espansione: ");
 			scanf(" %d", &missing_degree);
 		}
 
@@ -459,7 +469,7 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 		//moltiplico la matrice per tutti i monomi possibili
 		//moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
 		
-		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", missing_degree, *d_row, omp_get_wtime()-stopwatch);
 
 	while( flag != 1 ){
 		n_round++;
@@ -479,7 +489,7 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 		//passo il vettore appena calcolato alla procedura di gauss per invertire le righe in modo analogo a quanto avviene nella riduzione
 
 //-------------------------------------------------------------------------------------------
-		printf("\n -Eseguo Gauss, ");
+		fprintf(output_file, "\n -Eseguo Gauss, ");
 		fflush(stdout);
 		stopwatch = omp_get_wtime();
 
@@ -496,9 +506,9 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 		m_deg_array[n_round] = calloc(max_degree+1, sizeof(int));
 		m_deg = m_deg_array[n_round];
 
-		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-stopwatch);
+		fprintf(output_file, "numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-stopwatch);
   		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
-		print_matrix_degree(m_deg);
+		print_matrix_degree(m_deg,output_file);
 
 		new = *d_row;
 		st = new;
@@ -521,7 +531,7 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 		//o trovo una matrice con le stesso numero di righe della precedente mi fermo
 		if( (find_finishing_cycle(m_deg_array, n_round+1, max_degree) > n_loops && loop_flag) || (!(loop_flag) && old == new)  ) {
 			flag = 1;
-			printf("\n\nEXIT: superato numero di cicli massimo o numero righe rimaste invariate\n\n");	
+			fprintf(output_file, "\n\nEXIT: superato numero di cicli massimo o numero righe rimaste invariate\n\n");	
 			break;
 		}else{
 			if( target_degree(m_deg) == 0 ){
@@ -532,18 +542,18 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 				old = new;
 				//verbose
 				if (verbose_flag) {
-					printf("\nMatrice intermedia:\n\n");
-					print_matrix(*m, *d_row, col);
+					fprintf(output_file, "\nMatrice intermedia:\n\n");
+					print_matrix(*m, *d_row, col, output_file);
 				}
 			}
 		}
-		printf("\n -Eseguo moltiplicazione, ");
+		fprintf(output_file, "\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
 
 		int length = *d_row;
 		//moltiplico
 		if (manual_expand_flag) {
-			printf("inserire grado di espansione: ");
+			fprintf(stdout, "inserire grado di espansione: ");
 			scanf(" %d", &missing_degree);
 		}
 
@@ -564,7 +574,7 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 			}
 		}
 
-		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", missing_degree, *d_row, omp_get_wtime()-stopwatch);
 
 	
 		free(v2);
@@ -579,7 +589,7 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 
 
 
-void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag,bool manual_expand_flag,bool reduced_expand_flag, bool set_expand_flag, int expansion){
+void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag,bool manual_expand_flag,bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file){
 
 	double start_time = omp_get_wtime(), stopwatch;
 
@@ -589,7 +599,7 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 	int n_round = 0;
 	int *m_deg = m_deg_array[0];
 
-	printf("Inizio computazione, metodo standard\n");
+	fprintf(output_file, "Inizio computazione, metodo standard\n");
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
 	int flag,old,new;
@@ -607,7 +617,7 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 	while( flag != 1 ){
 		n_round++;
 
-		printf("\n -Eseguo moltiplicazione, ");
+		fprintf(output_file, "\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
 
 		int length = *d_row;
@@ -615,7 +625,7 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 		
 		//moltiplico
 		if (manual_expand_flag) {
-			printf("inserire grado di espansione: ");
+			fprintf(stdout, "inserire grado di espansione: ");
 			scanf(" %d", &missing_degree);
 		}
 
@@ -634,10 +644,10 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 		//moltiplico la matrice per tutti i monomi possibili
 		//moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
 		
-		printf("numero righe: %d     (%f sec)", *d_row,omp_get_wtime()-stopwatch);
+		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", missing_degree, *d_row, omp_get_wtime()-stopwatch);
 
 
-		printf("\n -Eseguo Gauss, ");
+		fprintf(output_file, "\n -Eseguo Gauss, ");
 		fflush(stdout);
 		stopwatch = omp_get_wtime();	
 		
@@ -653,9 +663,9 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 		m_deg_array[n_round] = calloc(max_degree+1, sizeof(int));
 		m_deg = m_deg_array[n_round];
 		
-		printf("numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-stopwatch);
+		fprintf(output_file, "numero righe: %d               (%f sec)\n", *d_row,omp_get_wtime()-stopwatch);
   		matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
-		print_matrix_degree(m_deg);
+		print_matrix_degree(m_deg,output_file);
 
 		new = *d_row;
 		st = new;
@@ -665,7 +675,7 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 		//o trovo una matrice con le stesso numero di righe della precedente mi fermo
 		if( (find_finishing_cycle(m_deg_array, n_round+1, max_degree) > n_loops && loop_flag) || (!(loop_flag) && old == new)  ) {
 			flag = 1;
-			printf("\n\nEXIT: superato numero di cicli massimo o numero righe rimaste invariate\n\n");	
+			fprintf(output_file, "\n\nEXIT: superato numero di cicli massimo o numero righe rimaste invariate\n\n");	
 		}
 		else
 			if( target_degree(m_deg) == 0 )
@@ -674,8 +684,8 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 				old = new;
 				//verbose
 				if (verbose_flag) {
-					printf("\nMatrice intermedia:\n\n");
-					print_matrix(*m, *d_row, col);
+					fprintf(output_file, "\nMatrice intermedia:\n\n");
+					print_matrix(*m, *d_row, col, output_file);
 				}
 			}
 
@@ -876,16 +886,16 @@ void setup_struct_map(struct map *map, int **vet, int len, int n, int m, int (*c
 	}
 }
 
-void print_struct_map(struct map map){
+void print_struct_map(struct map map, FILE *output_file){
 
-	printf("Inizio stampa\n");
+	fprintf(output_file, "Inizio stampa\n");
 	for(int i=0; i<map.len; i++ ){
 		for(int j=0; j<map.row[i].len; j++){
-			printf("%d ", map.row[i].col[j]);
+			fprintf(output_file, "%d ", map.row[i].col[j]);
 		}
-		printf("\n");
+		fprintf(output_file, "\n");
 	}
-	printf("Fine stampa\n");
+	fprintf(output_file, "Fine stampa\n");
 }
 
 
@@ -995,13 +1005,13 @@ void matrix_degree(long long **m, int row, int col, int *m_deg, int **vet, int n
 
 
 
-void print_matrix_degree(int *m_deg){
+void print_matrix_degree(int *m_deg, FILE *output_file){
 //stampa il vettore dei gradi della matrice.
 	int i;
-	printf("Gradi della matrice = {");
+	fprintf(output_file, "Gradi della matrice = {");
 	for(i=0; i<max_degree+1; i++)
-		if( m_deg[i] != 0 )	printf(" %d ",i);
-	printf("}\n");
+		if( m_deg[i] != 0 )	fprintf(output_file, " %d ",i);
+	fprintf(output_file, "}\n");
 }
 
 
@@ -1024,11 +1034,11 @@ int target_degree(int *v){
 
 
 
-void print_array(long long *v, int len){
+void print_array(long long *v, int len, FILE *output_file){
 	for(int i=0; i< len; i++){
-		printf("%lli ",v[i]);
+		fprintf(output_file, "%lli ",v[i]);
 	}
-	printf("\n\n");
+	fprintf(output_file, "\n\n");
 }
 
 
@@ -1112,7 +1122,7 @@ int find_finishing_cycle(int **vet, int length, int max_deg) {
 
 
 
-void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag,int n_loops, bool loop_flag,bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, int ex1, int ex2){
+void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag,int n_loops, bool loop_flag,bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file, int ex1, int ex2){
 
 	long long **m1,**m2,**m3;
 	int row1,row2,row3;
@@ -1128,40 +1138,40 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 
 
 
-	printf("\nESEGUO PRIMA RISOLUZIONE\n");
+	fprintf(output_file, "\nESEGUO PRIMA RISOLUZIONE\n");
 	switch (ex1) {
 	case 1:
-		execute_confronto(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion);
+		execute_confronto(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
 		break;
 	case 2:
-		execute_eliminazione(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion);
+		execute_eliminazione(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
 		break;
 	default:
-		execute_standard(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion);
+		execute_standard(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
 		break;	
 	}
 
-	printf("\nTERMINATA PRIMA RISOLUZIONE, NUMERO RIGHE:%d\n",row1);
+	fprintf(output_file, "\nTERMINATA PRIMA RISOLUZIONE, NUMERO RIGHE:%d\n",row1);
 
 
-	printf("\n\nESEGUO SECONDA RISOLUZIONE\n");
+	fprintf(output_file, "\n\nESEGUO SECONDA RISOLUZIONE\n");
 
 	switch (ex2) {
 	case 1:
-		execute_confronto(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion);
+		execute_confronto(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
 		break;
 	case 2:
-		execute_eliminazione(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion);
+		execute_eliminazione(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
 		break;
 	default:
-		execute_standard(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion);
+		execute_standard(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
 		break;	
 	}
 
 
-	printf("\nTERMINATA SECONDA RISOLUZIONE, NUMERO RIGHE:%d\n",row2);
+	fprintf(output_file, "\nTERMINATA SECONDA RISOLUZIONE, NUMERO RIGHE:%d\n",row2);
 
-	printf("\n\nCONFRONTO LE MATRICI PER OTTENERE IL NUMERO DI LINEE DIVERSE\n");
+	fprintf(output_file, "\n\nCONFRONTO LE MATRICI PER OTTENERE IL NUMERO DI LINEE DIVERSE\n");
 
 	//trovo il numero di linee diverse tra m1 e m2
 	row3 = row1;
@@ -1169,35 +1179,35 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 	matrix_cpy(m1, row3, col, m3);
 	eliminate_equal_rows(&m3, &row3, m2, row2, col);
 	
-	printf("\nRIGHE DIVERSE RISPETTO TRA PRIMO E SECONDO METODO:%d\n", row3);
+	fprintf(output_file, "\nRIGHE DIVERSE RISPETTO TRA PRIMO E SECONDO METODO:%d\n", row3);
 	matrix_free_long(&m3, row3, col);
 
 	//controllo che i polinomi di una matrice siano linearmente
 	//dipendenti da quelli dell'altra, necessario per soluzioni equivalenti
 	append_and_free_matrix(&m1, &row1, col, &m2, &row2, col);
 
-	printf("\n\nESEGUO APPEND, NUMERO RIGHE:%d\n",row1);
+	fprintf(output_file, "\n\nESEGUO APPEND, NUMERO RIGHE:%d\n",row1);
 
 	int *m_deg = calloc(max_degree+1, sizeof(int));
 	matrix_degree(m1,row1,col,m_deg,vet,num_var);
-	print_matrix_degree(m_deg);
+	print_matrix_degree(m_deg,output_file);
 
-	printf(" -Eseguo Gauss su matrice totale, ");
+	fprintf(output_file, " -Eseguo Gauss su matrice totale, ");
 	fflush(stdout);
 	stopwatch = omp_get_wtime();	
 	
 	gauss(m1, row1, col, module, 0, NULL);
 	eliminate_null_rows(&m1, &row1, col);
-	printf("numero righe: %d              (%f sec)\n", row1 ,omp_get_wtime()-stopwatch);
+	fprintf(output_file, "numero righe: %d              (%f sec)\n", row1 ,omp_get_wtime()-stopwatch);
 	matrix_degree(m1,row1,col,m_deg,vet,num_var);
-	print_matrix_degree(m_deg);	
+	print_matrix_degree(m_deg,output_file);	
 
 	matrix_free_long(&m1,row1,col);
 
 }
 
 
-void print_incognite(long long **m, int row, int col, int num_var, int **vet ){
+void print_incognite(long long **m, int row, int col, int num_var, int **vet, FILE *output_file){
 
 	int grado,last;
 
@@ -1215,10 +1225,10 @@ void print_incognite(long long **m, int row, int col, int num_var, int **vet ){
 		//se il grado della riga r è 1 allora stampa tutta la riga della matrice
 		if( grado == 1 ){
 			for( int j=0; j<last+1; j++ ){
-				printf("%lli ", m[r][j]);
+				fprintf(output_file, "%lli ", m[r][j]);
 			}
-			printf("\n\n");
+			fprintf(output_file, "\n\n");
 		}
 	}
-	printf("\n");	
+	fprintf(output_file, "\n");	
 }

@@ -1,9 +1,11 @@
 #ifndef MATRIX_H_  /* Include guard */
 #define MATRIX_H_
 
+#include <stdio.h>
+
 void swap_rows(long long **m, int row, int col, int j, int i);  // scambia tra di loro due righe della matrice
 
-void print_matrix (long long **m, int row, int col); // stampa la matrice
+void print_matrix (long long **m, int row, int col, FILE *output_file); // stampa la matrice
 
 //copia il vettore vet2 in vet1, entrambi di lunghezza len
 void vctcpy(int *vet1, int const *vet2, int len);

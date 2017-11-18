@@ -18,17 +18,17 @@ void swap_rows(long long **m, int row, int col, int j, int i){
 }
 
 //Stampa formattata della matrice
-void print_matrix(long long **m, int row, int col){
+void print_matrix(long long **m, int row, int col, FILE *output_file){
 
 	int i,j;	
 	for (i=0;i<row;i++)
 	{
 		for (j=0;j<col;j++){
-			printf("%lli ",m[i][j]);						
+			fprintf(output_file, "%lli ",m[i][j]);
 		}
-		printf("\n\n\n");
+		fprintf(output_file, "\n\n\n");
 	}
-	printf("\n");
+	fprintf(output_file, "\n");
 }
 
 //copia il vettore vet2 in vet1, entrambi di lunghezza len
