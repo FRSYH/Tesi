@@ -9,12 +9,14 @@ Per compilare il programma, è necessaria la libreria OpenMP.
 
 Per eseguire il programma
 
-`./gm --options > output_file`
+`./gm --options`
 
 
 **options**:
 
---**input file_name**: viene utilizzato il file **file_name** come input
+--**input input_file**: viene utilizzato il file **input_file** come input, in assenza di tale opzione viene usato stdin come input
+
+--**output file_name**: viene stampato il risultato sul file **file_name**, in assenza di tale opzione viene stampato il risultato su stdout
 
 --**execute n**: per scegliere quale tecnica risolutiva utilizzare, **n** scelta nel seguente elenco (default 0)
 
@@ -38,19 +40,19 @@ Per eseguire il programma
 
 ## ESEMPI DI ESECUZIONE
 
-`./gm --execute 0 --input input.txt > output.txt`
+`./gm --execute 0 --input input.txt --output output.txt`
 
 esegue il metodo standard sull'input contenuto nel file input.txt
 
-`./gm --execute 1 --reduced-expand --input input.txt > output.txt`
+`./gm --execute 1 --reduced-expand --input input.txt --output output.txt`
 
 esegue il metodo confronto, con fase di moltiplicazione ridotta, sull'input contenuto nel file input.txt
 
-`./gm --execute 2 --set-expand 3 --input input.txt > output.txt`
+`./gm --execute 2 --set-expand 3 --input input.txt --output output.txt`
 
 esegue il metodo eliminazione, con grado massimo dei monomi in fase di moltiplicazione pari a 3, sull'input contenuto nel file input.txt
 
-`./gm --execute 2 --manual-expand --input input.txt > output.txt`
+`./gm --execute 2 --manual-expand --input input.txt --output output.txt`
 
 esegue il metodo eliminazione, chiedendo ad ogni passo il grado massimo dei monomi in fase di moltiplicazione, sull'input contenuto nel file input.txt
 
