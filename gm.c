@@ -79,6 +79,8 @@ int find_finishing_cycle(int **vet, int length, int max_deg);
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
 
+void set_expansion_degree(int *expansion_degree,int *m_deg, bool manual_expand_flag, bool reduced_expand_flag);
+
 void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file);
 
 void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file);
@@ -298,7 +300,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 	flag = old = new = 0;
 	old = *d_row;
 	//assumo espansione normale
-	int missing_degree = max_degree;
+	int expansion_degree = max_degree;
 
 	long long **prev = NULL;
 	int row_prev = 0, row_tot = *d_row;
@@ -308,7 +310,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 	matrix_cpy(*m, row_tot, col, tot);
 
 	if (set_expand_flag)
-		missing_degree = expansion;
+		expansion_degree = expansion;
 
 
 	while( flag != 1 ){
@@ -324,24 +326,12 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 		fprintf(output_file, "\n -Eseguo moltiplicazione su m, ");
 		fflush(stdout);
 	
+		set_expansion_degree(&expansion_degree, m_deg, manual_expand_flag, reduced_expand_flag);
 
 		int length = *d_row;
-		//moltiplico
-		if (manual_expand_flag) {
-			fprintf(stdout, "inserire grado di espansione: ");
-			scanf(" %d", &missing_degree);
-		}
-		else if (reduced_expand_flag)
-			for(int i=max_degree; i>0; i--){
-				if( m_deg[i] == 0 ){
-					missing_degree = i;
-					break;
-				}
-			}
-
 		stopwatch = omp_get_wtime();
 		for(int i=0; i<length; i++){
-			moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,missing_degree);	
+			moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,expansion_degree);	
 		}
 
 		//moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
@@ -350,7 +340,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 		append_and_free_matrix(&tot, &row_tot, col, m, d_row, col);
 		//non mi serve più now
 		//matrix_free_long(m, *d_row, col);
-		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", missing_degree, row_tot, omp_get_wtime()-stopwatch);
+		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", expansion_degree, row_tot, omp_get_wtime()-stopwatch);
 
 		
 		//gauss(tot), gauss su tot che ha anche le linee moltiplicate
@@ -433,11 +423,11 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 	int n_round = 0;
 	int *m_deg = m_deg_array[0];
 	//assumo espansione normale
-	int missing_degree = max_degree;
+	int expansion_degree = max_degree;
 	matrix_degree(*m,*d_row,col,m_deg,vet,num_var);
 
 	if (set_expand_flag)
-		missing_degree = expansion;
+		expansion_degree = expansion;
 
 	fprintf(output_file, "Inizio computazione, metodo confronto\n");
 	//-------------------------------------------------------------------------------------------
@@ -445,31 +435,21 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 		fprintf(output_file, "\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
 
-		//moltiplico
-		if (manual_expand_flag) {
-			fprintf(stdout, "inserire grado di espansione: ");
-			scanf(" %d", &missing_degree);
-		}
-
-		else if (reduced_expand_flag)
-			for(int i=max_degree; i>0; i--){
-				if( m_deg[i] == 0 ){
-					missing_degree = i;
-					break;
-				}
-			}
-
 		stopwatch = omp_get_wtime();
+
+		set_expansion_degree(&expansion_degree, m_deg, manual_expand_flag, reduced_expand_flag);
+
+		//moltiplico
 		int length = *d_row;
 		for(int i=0; i<length; i++){
-			moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,missing_degree);	
+			moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,expansion_degree);	
 		}
 
 
 		//moltiplico la matrice per tutti i monomi possibili
 		//moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
 		
-		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", missing_degree, *d_row, omp_get_wtime()-stopwatch);
+		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", expansion_degree, *d_row, omp_get_wtime()-stopwatch);
 
 	while( flag != 1 ){
 		n_round++;
@@ -550,31 +530,20 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 		fprintf(output_file, "\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
 
-		int length = *d_row;
+		set_expansion_degree(&expansion_degree, m_deg, manual_expand_flag, reduced_expand_flag);
+		
 		//moltiplico
-		if (manual_expand_flag) {
-			fprintf(stdout, "inserire grado di espansione: ");
-			scanf(" %d", &missing_degree);
-		}
-
-		else if (reduced_expand_flag)
-			for(int i=max_degree; i>0; i--) {
-				if( m_deg[i] == 0 ) {
-					missing_degree = i;
-					break;
-				}
-			}
-
+		int length = *d_row;
 		stopwatch = omp_get_wtime();
 		for(int i=0; i<length; i++){
 			if( v1[i] > v2[i] ){ 	//significa che la riga è stata ridotta
 
-				moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,missing_degree);	//allora moltiplico tale riga
+				moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,expansion_degree);	//allora moltiplico tale riga
 				//moltiplica_riga(m,d_row,col,i,map,degree,vet,num_var);	//allora moltiplico tale riga
 			}
 		}
 
-		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", missing_degree, *d_row, omp_get_wtime()-stopwatch);
+		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", expansion_degree, *d_row, omp_get_wtime()-stopwatch);
 
 	
 		free(v2);
@@ -606,12 +575,12 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 	flag = old = new = 0;
 	old = *d_row;
 	//assumo espansione normale
-	int missing_degree = max_degree;
+	int expansion_degree = max_degree;
 	int st = 0;
 
 	
 	if (set_expand_flag)
-		missing_degree = expansion;
+		expansion_degree = expansion;
 
 
 	while( flag != 1 ){
@@ -620,31 +589,19 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 		fprintf(output_file, "\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
 
-		int length = *d_row;
-		
+		set_expansion_degree(&expansion_degree, m_deg, manual_expand_flag, reduced_expand_flag);
+		stopwatch = omp_get_wtime();
 		
 		//moltiplico
-		if (manual_expand_flag) {
-			fprintf(stdout, "inserire grado di espansione: ");
-			scanf(" %d", &missing_degree);
-		}
-
-		else if (reduced_expand_flag)
-			for(int i=max_degree; i>0; i--){
-				if( m_deg[i] == 0 ){
-					missing_degree = i;
-					break;
-				}
-			}
-		stopwatch = omp_get_wtime();
+		int length = *d_row;
 		for(int i=0; i<length; i++){
-			moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,missing_degree);	
+			moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,expansion_degree);	
 		}
 
 		//moltiplico la matrice per tutti i monomi possibili
 		//moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
 		
-		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", missing_degree, *d_row, omp_get_wtime()-stopwatch);
+		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", expansion_degree, *d_row, omp_get_wtime()-stopwatch);
 
 
 		fprintf(output_file, "\n -Eseguo Gauss, ");
@@ -1003,7 +960,25 @@ void matrix_degree(long long **m, int row, int col, int *m_deg, int **vet, int n
 	}
 }
 
+//in base alle flag calcola il grado di espansione e lo metto in expansion_degree
+//m_deg è l'array dei gradi dei polinomi presenti nella matrice
+void set_expansion_degree(int *expansion_degree,int *m_deg, bool manual_expand_flag, bool reduced_expand_flag) {
 
+	if (manual_expand_flag) {
+		fprintf(stdout, "inserire grado di espansione: ");
+		scanf(" %d", expansion_degree);
+	}
+	//se ridotta calcolo il grado mancante
+	else if (reduced_expand_flag)
+		for(int i=max_degree; i>0; i--){
+			if( m_deg[i] == 0 ){
+				*expansion_degree = i;
+				break;
+			}
+		}
+	return;
+
+}
 
 void print_matrix_degree(int *m_deg, FILE *output_file){
 //stampa il vettore dei gradi della matrice.
