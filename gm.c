@@ -14,7 +14,7 @@
 //dichiarazione variabili globali
 int max_degree = 0;
 long long module = 0;
-bool verbose_flag, help_flag, version_flag, test_flag, loop_flag, verify_flag, manual_expand_flag, reduced_expand_flag, set_expand_flag;
+bool verbose_flag, help_flag, version_flag, test_flag, loop_flag, verify_flag, manual_expand_flag, reduced_expand_flag, set_expand_flag, partial_gauss_flag;
 
 struct map_row {
 	int len;
@@ -102,7 +102,7 @@ int main (int argc, char *argv[]){
 
 	FILE *input_file = NULL, *output_file = NULL;
 	//inizializzo flag a false
-	verbose_flag = help_flag = version_flag = test_flag= loop_flag = verify_flag = manual_expand_flag = reduced_expand_flag = set_expand_flag = false;
+	verbose_flag = help_flag = version_flag = test_flag= loop_flag = verify_flag = manual_expand_flag = reduced_expand_flag = set_expand_flag = partial_gauss_flag = false;
 	//parsing delle opzioni
 	//numero cicli dei gradi di default = 30
 	//execute_standard di default
@@ -123,6 +123,8 @@ int main (int argc, char *argv[]){
 			manual_expand_flag = true;
 		else if (!strcmp(argv[parsed], "--reduced-expand"))
 			reduced_expand_flag = true;
+		else if (!strcmp(argv[parsed], "--partial-gauss"))
+			partial_gauss_flag = true;
 		else if (!strcmp(argv[parsed], "--loops")) {
 			loop_flag = true;
 			parsed++;
@@ -348,6 +350,8 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 		//matrix_free_long(m, *d_row, col);
 		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", expansion_degree, row_tot, omp_get_wtime()-stopwatch);
 
+		if (partial_gauss_flag)
+			partial_gauss(tot, row_tot, col, num_var, output_file);
 		
 		//gauss(tot), gauss su tot che ha anche le linee moltiplicate
 		fprintf(output_file, " -Eseguo Gauss, ");
@@ -438,24 +442,24 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 	fprintf(output_file, "Inizio computazione, metodo confronto\n");
 	//-------------------------------------------------------------------------------------------
 
-		fprintf(output_file, "\n -Eseguo moltiplicazione, ");
-		fflush(stdout);
+	fprintf(output_file, "\n -Eseguo moltiplicazione, ");
+	fflush(stdout);
 
-		stopwatch = omp_get_wtime();
+	stopwatch = omp_get_wtime();
 
-		set_expansion_degree(&expansion_degree, m_deg);
+	set_expansion_degree(&expansion_degree, m_deg);
 
-		//moltiplico
-		int length = *d_row;
-		for(int i=0; i<length; i++){
-			moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,expansion_degree);	
-		}
+	//moltiplico
+	int length = *d_row;
+	for(int i=0; i<length; i++){
+		moltiplica_riga_forn(m,d_row,col,i,map,degree,vet,num_var,expansion_degree);	
+	}
 
 
-		//moltiplico la matrice per tutti i monomi possibili
-		//moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
-		
-		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", expansion_degree, *d_row, omp_get_wtime()-stopwatch);
+	//moltiplico la matrice per tutti i monomi possibili
+	//moltiplica_matrice(m,d_row,col,map,degree,vet,num_var,0);
+	
+	fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", expansion_degree, *d_row, omp_get_wtime()-stopwatch);
 
 	while( flag != 1 ){
 		n_round++;
@@ -475,6 +479,10 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 		//passo il vettore appena calcolato alla procedura di gauss per invertire le righe in modo analogo a quanto avviene nella riduzione
 
 //-------------------------------------------------------------------------------------------
+		if (partial_gauss_flag)
+			partial_gauss(*m, *d_row, col, num_var, output_file);
+
+
 		fprintf(output_file, "\n -Eseguo Gauss, ");
 		fflush(stdout);
 		stopwatch = omp_get_wtime();
@@ -609,11 +617,14 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 		
 		fprintf(output_file, "grado di espansione: %d, numero righe: %d     (%f sec)\n", expansion_degree, *d_row, omp_get_wtime()-stopwatch);
 
+		if (partial_gauss_flag)
+			partial_gauss(*m, *d_row, col, num_var, output_file);
 
 		fprintf(output_file, "\n -Eseguo Gauss, ");
 		fflush(stdout);
 		stopwatch = omp_get_wtime();	
-		
+
+
 		//applico la riduzione di Gauss
 		gauss(*m, *d_row, col, module, st,NULL);
 		//elimino le righe nulle della matrice
@@ -995,13 +1006,13 @@ void partial_gauss(long long **m, int row, int col, int num_var, FILE *output_fi
 	long long **temp;
 	int col_degree, temp_col;
 
-	fprintf(stdout, "Si vuole effettuare gauss su una porzione della matrice? (y/n):  ");
+	fprintf(stdout, "\nSi vuole effettuare gauss su una porzione della matrice? (y/n):  ");
 	fscanf(stdin, " %c", &answer);
 	
 	if (answer != 'y')
 		return;
 
-	fprintf(stdout, "Scegliere il grado massimo dei monomi su cui eseguire l'eliminazione:  ");
+	fprintf(stdout, "\nScegliere il grado massimo dei monomi su cui eseguire l'eliminazione:  ");
 	fscanf(stdin, " %d", &col_degree);
 
 	if (col_degree > max_degree || col_degree < 0)
@@ -1013,7 +1024,7 @@ void partial_gauss(long long **m, int row, int col, int num_var, FILE *output_fi
 	gauss(temp, row, temp_col, module, 0, NULL);
 	eliminate_null_rows(&temp, &row, temp_col);
 	
-	fprintf(output_file, "\nEseguo gauss parziale su %d colonne\n", temp_col);
+	fprintf(output_file, "\nEseguo gauss parziale su %d colonne\n\n", temp_col);
 	print_matrix(temp, row, temp_col, output_file);
 
 	matrix_free_long(&temp, row, temp_col);

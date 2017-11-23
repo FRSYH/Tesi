@@ -32,6 +32,8 @@ Per eseguire il programma
 
 --**manual-expand**: ad ogni fase di espansione viene chiesto di inserire il grado massimo dei monomi che verrano moltiplicati (non funziona bene col metodo confronto)
 
+--**partial-gauss**: ad ogni passo chiede se effettuare l'eliminazione gaussiana su una porzione della matrice
+
 --**verbose**: stampa la matrice completa ad ogni passo
 
 --**loops n**: cambia la condizione di terminazione (quella standard è data dalla matrice rimasta immutato dopo un passo). n indica il numero massimo di passi consecutivi nella computazione in cui i gradi mancanti restano immutati.
