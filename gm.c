@@ -14,6 +14,7 @@
 //dichiarazione variabili globali
 int max_degree = 0;
 long long module = 0;
+bool verbose_flag, help_flag, version_flag, test_flag, loop_flag, verify_flag, manual_expand_flag, reduced_expand_flag, set_expand_flag;
 
 struct map_row {
 	int len;
@@ -84,15 +85,15 @@ void partial_gauss(long long **m, int row, int col, int num_var, FILE *output_fi
 
 int compare_arrays(const void *rowA, const void *rowB, void *columns);
 
-void set_expansion_degree(int *expansion_degree,int *m_deg, bool manual_expand_flag, bool reduced_expand_flag);
+void set_expansion_degree(int *expansion_degree,int *m_deg);
 
-void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file);
+void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, int n_loops, int expansion, FILE *output_file);
 
-void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file);
+void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, int n_loops, int expansion, FILE *output_file);
 
-void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file);
+void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, int n_loops, int expansion, FILE *output_file);
 
-void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag, bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file, int ex1, int ex2);
+void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, int n_loops, int expansion, FILE *output_file, int ex1, int ex2);
 
 void print_incognite(long long **m, int row, int col, int num_var, int **vet, FILE *output_file);
 
@@ -100,9 +101,9 @@ void print_incognite(long long **m, int row, int col, int num_var, int **vet, FI
 int main (int argc, char *argv[]){
 
 	FILE *input_file = NULL, *output_file = NULL;
-	//parsing delle opzioni
-	bool verbose_flag, help_flag, version_flag, test_flag, loop_flag, verify_flag, manual_expand_flag, reduced_expand_flag, set_expand_flag;
+	//inizializzo flag a false
 	verbose_flag = help_flag = version_flag = test_flag= loop_flag = verify_flag = manual_expand_flag = reduced_expand_flag = set_expand_flag = false;
+	//parsing delle opzioni
 	//numero cicli dei gradi di default = 30
 	//execute_standard di default
 	//verifica tra standard e confronto di default
@@ -238,17 +239,17 @@ int main (int argc, char *argv[]){
 	if (!verify_flag)
 		switch (execute) {
 		case 1:
-			execute_confronto(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
+			execute_confronto(&m,d_row,col,smap,degree,vet,num_var,n_loops,expansion,output_file);
 			break;
 		case 2:
-			execute_eliminazione(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
+			execute_eliminazione(&m,d_row,col,smap,degree,vet,num_var,n_loops,expansion,output_file);
 			break;
 		default:
-			execute_standard(&m,d_row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
+			execute_standard(&m,d_row,col,smap,degree,vet,num_var,n_loops,expansion,output_file);
 			break;	
 		}
 	else	
-		verifica_correttezza(m,row,col,smap,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file,ex1,ex2);
+		verifica_correttezza(m,row,col,smap,degree,vet,num_var,n_loops,expansion,output_file,ex1,ex2);
 
 //----------------------------------------------------------------------------
 
@@ -282,7 +283,7 @@ int main (int argc, char *argv[]){
 
 
 
-void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag,bool manual_expand_flag,bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file){
+void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, int n_loops, int expansion, FILE *output_file){
 
 	//eseguo moltiplicazione e riduzione di Gauss finche non trovo soluzione
 	//non moltiplico le linee iniziali uguali a quelle dell'iterazione precedente
@@ -331,7 +332,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 		fprintf(output_file, "\n -Eseguo moltiplicazione su m, ");
 		fflush(stdout);
 	
-		set_expansion_degree(&expansion_degree, m_deg, manual_expand_flag, reduced_expand_flag);
+		set_expansion_degree(&expansion_degree, m_deg);
 
 		int length = *d_row;
 		stopwatch = omp_get_wtime();
@@ -409,7 +410,7 @@ void execute_eliminazione(long long ***m, int * d_row, int col, struct map map, 
 
 
 
-void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag,bool manual_expand_flag,bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file){
+void execute_confronto(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, int n_loops, int expansion, FILE *output_file){
 
 	
 	int flag,old,new,inv;
@@ -442,7 +443,7 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 
 		stopwatch = omp_get_wtime();
 
-		set_expansion_degree(&expansion_degree, m_deg, manual_expand_flag, reduced_expand_flag);
+		set_expansion_degree(&expansion_degree, m_deg);
 
 		//moltiplico
 		int length = *d_row;
@@ -535,7 +536,7 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 		fprintf(output_file, "\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
 
-		set_expansion_degree(&expansion_degree, m_deg, manual_expand_flag, reduced_expand_flag);
+		set_expansion_degree(&expansion_degree, m_deg);
 		
 		//moltiplico
 		int length = *d_row;
@@ -563,7 +564,7 @@ void execute_confronto(long long ***m, int * d_row, int col, struct map map, int
 
 
 
-void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag, int n_loops, bool loop_flag,bool manual_expand_flag,bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file){
+void execute_standard(long long ***m, int * d_row, int col, struct map map, int *degree, int **vet, int num_var, int n_loops, int expansion, FILE *output_file){
 
 	double start_time = omp_get_wtime(), stopwatch;
 
@@ -594,7 +595,7 @@ void execute_standard(long long ***m, int * d_row, int col, struct map map, int 
 		fprintf(output_file, "\n -Eseguo moltiplicazione, ");
 		fflush(stdout);
 
-		set_expansion_degree(&expansion_degree, m_deg, manual_expand_flag, reduced_expand_flag);
+		set_expansion_degree(&expansion_degree, m_deg);
 		stopwatch = omp_get_wtime();
 		
 		//moltiplico
@@ -967,7 +968,7 @@ void matrix_degree(long long **m, int row, int col, int *m_deg, int **vet, int n
 
 //in base alle flag calcola il grado di espansione e lo metto in expansion_degree
 //m_deg è l'array dei gradi dei polinomi presenti nella matrice
-void set_expansion_degree(int *expansion_degree,int *m_deg, bool manual_expand_flag, bool reduced_expand_flag) {
+void set_expansion_degree(int *expansion_degree,int *m_deg) {
 
 	if (manual_expand_flag) {
 		fprintf(stdout, "inserire grado di espansione: ");
@@ -1123,7 +1124,7 @@ int compare_arrays(const void *rowA, const void *rowB, void *columns) {
 	return 0;
 }
 
-void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag,int n_loops, bool loop_flag,bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file, int ex1, int ex2){
+void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var,int n_loops, int expansion, FILE *output_file, int ex1, int ex2){
 
 	long long **m1,**m2,**m3;
 	int row1,row2,row3;
@@ -1142,13 +1143,13 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 	fprintf(output_file, "\nESEGUO PRIMA RISOLUZIONE\n");
 	switch (ex1) {
 	case 1:
-		execute_confronto(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
+		execute_confronto(&m1,&row1,col,map,degree,vet,num_var,n_loops,expansion,output_file);
 		break;
 	case 2:
-		execute_eliminazione(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
+		execute_eliminazione(&m1,&row1,col,map,degree,vet,num_var,n_loops,expansion,output_file);
 		break;
 	default:
-		execute_standard(&m1,&row1,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
+		execute_standard(&m1,&row1,col,map,degree,vet,num_var,n_loops,expansion,output_file);
 		break;	
 	}
 
@@ -1159,13 +1160,13 @@ void verifica_correttezza(long long **m, int row, int col, struct map map, int *
 
 	switch (ex2) {
 	case 1:
-		execute_confronto(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
+		execute_confronto(&m2,&row2,col,map,degree,vet,num_var,n_loops,expansion,output_file);
 		break;
 	case 2:
-		execute_eliminazione(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
+		execute_eliminazione(&m2,&row2,col,map,degree,vet,num_var,n_loops,expansion,output_file);
 		break;
 	default:
-		execute_standard(&m2,&row2,col,map,degree,vet,num_var,verbose_flag,n_loops,loop_flag,manual_expand_flag,reduced_expand_flag,set_expand_flag,expansion,output_file);
+		execute_standard(&m2,&row2,col,map,degree,vet,num_var,n_loops,expansion,output_file);
 		break;	
 	}
 
