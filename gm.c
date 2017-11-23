@@ -11,6 +11,7 @@
 #include "scan.h"
 #include <unistd.h>
 
+//dichiarazione variabili globali
 int max_degree = 0;
 long long module = 0;
 
@@ -78,6 +79,10 @@ int find_finishing_cycle(int **vet, int length, int max_deg);
 
 //compare the matrix degree with the target degree wich are {0,1,2,3,4,5...max_degree} return 0 if equal -1 if not
 int target_degree(int *v);
+
+void partial_gauss(long long **m, int row, int col, int num_var, FILE *output_file);
+
+int compare_arrays(const void *rowA, const void *rowB, void *columns);
 
 void set_expansion_degree(int *expansion_degree,int *m_deg, bool manual_expand_flag, bool reduced_expand_flag);
 
@@ -966,7 +971,7 @@ void set_expansion_degree(int *expansion_degree,int *m_deg, bool manual_expand_f
 
 	if (manual_expand_flag) {
 		fprintf(stdout, "inserire grado di espansione: ");
-		scanf(" %d", expansion_degree);
+		fscanf(stdin, " %d", expansion_degree);
 	}
 	//se ridotta calcolo il grado mancante
 	else if (reduced_expand_flag)
@@ -979,6 +984,42 @@ void set_expansion_degree(int *expansion_degree,int *m_deg, bool manual_expand_f
 	return;
 
 }
+
+
+//esegue gauss, se richiesto, su una porzione della matrice specificata dall'utente
+//e stampa il risultato nel output_file
+void partial_gauss(long long **m, int row, int col, int num_var, FILE *output_file) {
+
+	char answer = 'n';
+	long long **temp;
+	int col_degree, temp_col;
+
+	fprintf(stdout, "Si vuole effettuare gauss su una porzione della matrice? (y/n):  ");
+	fscanf(stdin, " %c", &answer);
+	
+	if (answer != 'y')
+		return;
+
+	fprintf(stdout, "Scegliere il grado massimo dei monomi su cui eseguire l'eliminazione:  ");
+	fscanf(stdin, " %d", &col_degree);
+
+	if (col_degree > max_degree || col_degree < 0)
+		col_degree = max_degree;
+	temp_col = monomial_combinations(num_var, col_degree);
+
+	matrix_alloc_long(&temp, row, temp_col);
+	matrix_cpy(m, row, temp_col, temp);
+	gauss(temp, row, temp_col, module, 0, NULL);
+	eliminate_null_rows(&temp, &row, temp_col);
+	
+	fprintf(output_file, "\nEseguo gauss parziale su %d colonne\n", temp_col);
+	print_matrix(temp, row, temp_col, output_file);
+
+	matrix_free_long(&temp, row, temp_col);
+
+	return;
+}
+
 
 void print_matrix_degree(int *m_deg, FILE *output_file){
 //stampa il vettore dei gradi della matrice.
@@ -1007,40 +1048,6 @@ int target_degree(int *v){
 	return flag;
 }
 
-
-
-void print_array(long long *v, int len, FILE *output_file){
-	for(int i=0; i< len; i++){
-		fprintf(output_file, "%lli ",v[i]);
-	}
-	fprintf(output_file, "\n\n");
-}
-
-
-void array_copy(long long *v1, long long *v2, int len){
-	for(int i=0; i<len; i++) v2[i] = v1[i];
-}
-
-//funzione di confronto gli array rowA con rowB, scorrendo gli elementi da destra a sinistra
-//restituisce 1 se rowA > rowB, -1 se rowB > rowA, 0 altrimenti. Compatibile con qsort_r
-int compare_arrays(const void *rowA, const void *rowB, void *columns) {
-
-	int *row1, *row2;
-	int col;
-	
-	col = *((int *) columns);
-	row1 = *((int **) rowA);
-	row2 = *((int **) rowB);
-	
-	for (int i = col-1; i >= 0; i--) {
-		if (row1[i] > row2[i])
-			return 1;
-		else if (row1[i] < row2[i])
-			return -1;
-	}
-	
-	return 0;
-}
 
 //funzione che prende un vettore vet contenente length vettori di lunghezza (max_deg+1)
 //retituisce il numero di cicli massimo all'interno di vet partendo dai valori in fondo
@@ -1095,7 +1102,26 @@ int find_finishing_cycle(int **vet, int length, int max_deg) {
 	return max_cycles;
 }
 
+//funzione di confronto gli array rowA con rowB, scorrendo gli elementi da destra a sinistra
+//restituisce 1 se rowA > rowB, -1 se rowB > rowA, 0 altrimenti. Compatibile con qsort_r
+int compare_arrays(const void *rowA, const void *rowB, void *columns) {
 
+	int *row1, *row2;
+	int col;
+	
+	col = *((int *) columns);
+	row1 = *((int **) rowA);
+	row2 = *((int **) rowB);
+	
+	for (int i = col-1; i >= 0; i--) {
+		if (row1[i] > row2[i])
+			return 1;
+		else if (row1[i] < row2[i])
+			return -1;
+	}
+	
+	return 0;
+}
 
 void verifica_correttezza(long long **m, int row, int col, struct map map, int *degree, int **vet, int num_var, bool verbose_flag,int n_loops, bool loop_flag,bool manual_expand_flag, bool reduced_expand_flag, bool set_expand_flag, int expansion, FILE *output_file, int ex1, int ex2){
 
